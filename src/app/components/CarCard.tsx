@@ -19,17 +19,19 @@ export default function CarCard({ car }: CarCardProps) {
     <>
       <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="p-0">
-          <div className="relative h-48 overflow-hidden">
-            <img
-              src={car.image}
-              alt={car.name}
-              className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-              loading="lazy"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = hatchbackImg; // Use imported fallback
-              }}
-            />
+          <div className="relative h-48 overflow-hidden bg-slate-50/50 p-4">
+            <a href={car.image} target="_blank" rel="noopener noreferrer" className="block w-full h-full flex items-center justify-center">
+              <img
+                src={car.image}
+                alt={car.name}
+                className="max-w-full max-h-full object-contain hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = hatchbackImg; // Use imported fallback
+                }}
+              />
+            </a>
             <div className="absolute top-2 right-2 flex gap-2">
               {car.category === 'automatic' && (
                 <Badge className="bg-purple-600">Automatic</Badge>
