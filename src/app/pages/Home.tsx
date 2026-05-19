@@ -40,9 +40,9 @@ export default function Home() {
             </div>
             <div className="hidden md:block">
               <img
-                src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800"
-                alt="Car"
-                className="rounded-lg shadow-2xl"
+                src="https://images.unsplash.com/photo-1610647752706-3bb12232b3ab?w=800&auto=format&fit=crop&q=80"
+                alt="Scenic road trip with an SUV"
+                className="rounded-lg shadow-2xl object-cover h-[400px] w-full"
               />
             </div>
           </div>
