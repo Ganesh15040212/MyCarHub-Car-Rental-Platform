@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Car, Users, Gauge, Calendar } from 'lucide-react';
+import { Car, Users, Gauge, Calendar, Eye } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Car as CarType } from '../types/car';
 import BookingModal from './BookingModal';
+import CarGalleryModal from './CarGalleryModal';
 
 import hatchbackImg from '@/assets/images/cars/hatchback.png';
 
@@ -14,24 +15,34 @@ interface CarCardProps {
 
 export default function CarCard({ car }: CarCardProps) {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   return (
     <>
       <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="p-0">
-          <div className="relative h-48 overflow-hidden bg-slate-50/50 p-4">
-            <a href={car.image} target="_blank" rel="noopener noreferrer" className="block w-full h-full flex items-center justify-center">
-              <img
-                src={car.image}
-                alt={car.name}
-                className="max-w-full max-h-full object-contain hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = hatchbackImg; // Use imported fallback
-                }}
-              />
-            </a>
+          <div className="relative h-48 overflow-hidden bg-slate-50/50 p-4 flex flex-col items-center justify-center group">
+            <img
+              src={car.image}
+              alt={car.name}
+              className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = hatchbackImg; // Use imported fallback
+              }}
+            />
+            
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <button 
+                onClick={() => setIsGalleryOpen(true)}
+                className="bg-white text-gray-900 font-bold py-2 px-4 rounded-full flex items-center gap-2 hover:bg-gray-100 hover:scale-105 transition-all shadow-lg"
+              >
+                <Eye className="w-4 h-4" />
+                View Car
+              </button>
+            </div>
+
             <div className="absolute top-2 right-2 flex gap-2">
               {car.category === 'automatic' && (
                 <Badge className="bg-purple-600">Automatic</Badge>
@@ -86,6 +97,12 @@ export default function CarCard({ car }: CarCardProps) {
         car={car}
         isOpen={isBookingOpen}
         onClose={() => setIsBookingOpen(false)}
+      />
+
+      <CarGalleryModal
+        car={car}
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
       />
     </>
   );

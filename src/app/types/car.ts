@@ -5,6 +5,7 @@ export interface Car {
   seater: 5 | 7;
   category: 'manual' | 'automatic';
   image: string;
+  images?: string[];
   available: boolean;
 }
 
@@ -13,14 +14,15 @@ export interface BookingForm {
   carName: string;
   customerName: string;
   phone: string;
-  aadharNumber: string;
-  licenseNumber: string;
-  smartCardNumber: string;
+  proofType: string;
+  proofNumber: string;
   depositAmount: number;
   bikeModel?: string;
   bikeYear?: string;
-  bookingDate: string;
-  bookingDuration: number;
+  pickupDate: string;
+  pickupTime: string;
+  dropDate: string;
+  dropTime: string;
 }
 
 export const COMPANY_INFO = {
