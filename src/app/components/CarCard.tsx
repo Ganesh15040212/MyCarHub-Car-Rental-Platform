@@ -47,7 +47,9 @@ export default function CarCard({ car }: CarCardProps) {
               {car.category === 'automatic' && (
                 <Badge className="bg-purple-600">Automatic</Badge>
               )}
-              {car.available ? (
+              {car.isBooked && car.availableFrom ? (
+                <Badge className="bg-orange-500 text-white hover:bg-orange-600">Available on {car.availableFrom}</Badge>
+              ) : car.available ? (
                 <Badge className="bg-green-600">Available</Badge>
               ) : (
                 <Badge variant="destructive">Booked</Badge>
@@ -84,11 +86,15 @@ export default function CarCard({ car }: CarCardProps) {
         <CardFooter className="p-4 pt-0">
           <Button
             onClick={() => setIsBookingOpen(true)}
-            disabled={!car.available}
-            className="w-full bg-red-600 hover:bg-red-700"
+            disabled={!car.available || !!car.isBooked}
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold transition-all hover:scale-[1.01] active:scale-95 cursor-pointer"
           >
-            <Calendar className="w-4 h-4 mr-2" />
-            {car.available ? 'Book Now' : 'Not Available'}
+            <Calendar className="w-4 h-4 mr-1.5" />
+            {car.isBooked && car.availableFrom
+              ? `Available on ${car.availableFrom}`
+              : car.available
+              ? 'Book Now'
+              : 'Booked'}
           </Button>
         </CardFooter>
       </Card>

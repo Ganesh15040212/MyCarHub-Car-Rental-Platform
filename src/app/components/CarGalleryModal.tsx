@@ -15,13 +15,23 @@ export default function CarGalleryModal({ car, isOpen, onClose }: CarGalleryModa
 
   if (!car) return null;
 
-  // Use the images array if available, otherwise fallback to the single image.
-  // Generate up to 10 distinct images for demo purposes so the slider shows different views.
-  let images = car.images && car.images.length > 0 ? car.images : [];
-  if (images.length === 0) {
+  // Merge the primary car.image and the 10 additional car.images array fields to compile the complete 11-image collection.
+  let images: string[] = [];
+  if (car.image) {
+    images.push(car.image);
+  }
+
+  const validAdditionalImages = car.images && Array.isArray(car.images)
+    ? car.images.filter((img) => img && typeof img === 'string' && img.trim() !== '')
+    : [];
+
+  images = [...images, ...validAdditionalImages];
+
+  // If there are no valid additional images, generate fallbacks to ensure we show 11 images total
+  if (images.length <= 1) {
     const name = encodeURIComponent(car.name);
     images = [
-      car.image,
+      car.image || hatchbackImg,
       `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Front+View`,
       `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Rear+View`,
       `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Side+Profile`,
@@ -30,7 +40,8 @@ export default function CarGalleryModal({ car, isOpen, onClose }: CarGalleryModa
       `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Rear+Seats`,
       `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Boot+Space`,
       `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Engine+Bay`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Wheel+Detail`
+      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Wheel+Detail`,
+      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Interior+Roof`
     ];
   }
 
@@ -53,7 +64,10 @@ export default function CarGalleryModal({ car, isOpen, onClose }: CarGalleryModa
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 border-none bg-white text-gray-900 overflow-hidden flex flex-col">
+      <DialogContent 
+        className="max-w-4xl max-h-[90vh] p-0 border-none bg-white text-gray-900 overflow-hidden flex flex-col"
+        aria-describedby={undefined}
+      >
         <DialogHeader className="p-4 border-b border-gray-100 flex flex-row items-center justify-between sticky top-0 bg-white z-10">
           <DialogTitle className="text-xl font-bold">
             {car.name} Gallery

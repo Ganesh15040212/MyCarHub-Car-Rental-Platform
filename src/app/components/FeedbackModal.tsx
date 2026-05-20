@@ -71,7 +71,10 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[850px] p-0 border-none bg-transparent shadow-none overflow-hidden flex items-center justify-center [&>button]:hidden">
+      <DialogContent 
+        className="max-w-[95vw] sm:max-w-[850px] p-0 border-none bg-transparent shadow-none overflow-hidden flex items-center justify-center [&>button]:hidden"
+        aria-describedby={undefined}
+      >
         <div className="relative bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.18)] w-full overflow-y-auto md:overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:max-h-none md:min-h-[500px]">
           {/* Left Column: Branding & Rating */}
           <div className="md:w-[40%] bg-gradient-to-br from-red-600 via-red-700 to-red-800 p-8 sm:p-12 text-white relative flex flex-col justify-between">

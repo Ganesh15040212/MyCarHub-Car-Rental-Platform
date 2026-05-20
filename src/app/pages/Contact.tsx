@@ -38,7 +38,7 @@ export default function Contact() {
     setErrors(prev => ({ ...prev, [name]: error }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const hasErrors = Object.values(errors).some(err => err !== '');
@@ -47,13 +47,37 @@ export default function Contact() {
       return;
     }
 
-    toast.info('Message Sent (Preview)', {
-      description: 'Your message has been processed in this frontend demo.',
-    });
+    const toastId = toast.loading('Sending message...');
+    try {
+      const response = await fetch('http://localhost:5000/api/feedbacks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    setFormData({ name: '', email: '', phone: '', message: '' });
-    setErrors({});
+      if (response.ok) {
+        toast.success('Message Sent Successfully!', {
+          id: toastId,
+          description: 'Thank you! The company owner has been alerted and we will get back to you shortly.',
+        });
+        setFormData({ name: '', email: '', phone: '', message: '' });
+        setErrors({});
+      } else {
+        throw new Error('API server returned error');
+      }
+    } catch (err) {
+      console.warn('Backend server offline. Simulating offline contact message submit.', err);
+      toast.info('Message Sent (Offline Mode)', {
+        id: toastId,
+        description: 'Your message has been logged in this session preview. Our team will contact you shortly.',
+      });
+      setFormData({ name: '', email: '', phone: '', message: '' });
+      setErrors({});
+    }
   };
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

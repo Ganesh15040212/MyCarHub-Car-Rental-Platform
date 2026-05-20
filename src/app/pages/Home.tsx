@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, Car, Shield, Clock, HeadphonesIcon, Star } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -6,10 +7,37 @@ import CarCard from '../components/CarCard';
 import { fiveSeaterCars, sevenSeaterCars } from '../data/cars';
 
 export default function Home() {
-  const featuredCars = [
-    ...fiveSeaterCars.slice(6, 9),
-    ...sevenSeaterCars.slice(0, 3),
-  ];
+  const [cars, setCars] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/cars');
+        if (response.ok) {
+          const data = await response.json();
+          setCars(data);
+        } else {
+          throw new Error('Failed to fetch from API');
+        }
+      } catch (err) {
+        console.warn('Backend server offline. Falling back to static cars.', err);
+        setCars([...fiveSeaterCars, ...sevenSeaterCars]);
+      }
+    };
+
+    fetchCars();
+
+    // Live update: Poll cars every 4 seconds to sync live with backend / admin changes
+    const interval = setInterval(() => {
+      fetchCars();
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter active and available cars, displaying a mix of 6 featured cars
+  const activeCars = cars.length > 0 ? cars.filter(c => c.available) : [...fiveSeaterCars, ...sevenSeaterCars].filter(c => c.available);
+  const featuredCars = activeCars.slice(0, 6);
 
   return (
     <div>

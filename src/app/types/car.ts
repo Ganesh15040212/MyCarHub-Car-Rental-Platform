@@ -7,6 +7,8 @@ export interface Car {
   image: string;
   images?: string[];
   available: boolean;
+  isBooked?: boolean;
+  availableFrom?: string;
 }
 
 export interface BookingForm {

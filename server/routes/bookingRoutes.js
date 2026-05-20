@@ -1,0 +1,446 @@
+import express from 'express';
+import Booking from '../models/Booking.js';
+import Car from '../models/Car.js';
+import nodemailer from 'nodemailer';
+import PDFDocument from 'pdfkit';
+
+const router = express.Router();
+
+// Helper to configure email transporter
+const sendBookingEmail = async (bookingData) => {
+  const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
+  const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
+  const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
+
+  if (!EMAIL_USER || !EMAIL_PASS) {
+    return;
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', // or customize based on environment
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+    });
+
+    const toEmails = [OWNER_EMAIL || 'info@mycarhub.com', bookingData.email];
+
+    const mailOptions = {
+      from: `"My Car Hub Bookings" <${EMAIL_USER}>`,
+      to: toEmails.join(', '),
+      subject: `🚗 New Car Booking Alert - ID: ${bookingData.bookingId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
+          <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
+            <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub</h1>
+            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">NEW BOOKING REQUEST RECEIVED</p>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #030213; border-bottom: 1px solid #eee; padding-bottom: 8px;">Customer Information</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 6px 0; color: #666; width: 40%;"><strong>Full Name:</strong></td>
+                <td style="padding: 6px 0; color: #111;">${bookingData.customerName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #666;"><strong>Email Address:</strong></td>
+                <td style="padding: 6px 0; color: #111;"><a href="mailto:${bookingData.email}" style="color: #d4183d; text-decoration: none;">${bookingData.email}</a></td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #666;"><strong>Phone Number:</strong></td>
+                <td style="padding: 6px 0; color: #111;"><a href="tel:${bookingData.phone}" style="color: #d4183d; text-decoration: none; font-weight: bold;">${bookingData.phone}</a></td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #030213; border-bottom: 1px solid #eee; padding-bottom: 8px;">Rental Vehicle Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 6px 0; color: #666; width: 40%;"><strong>Car Reserved:</strong></td>
+                <td style="padding: 6px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #666;"><strong>Car ID:</strong></td>
+                <td style="padding: 6px 0; color: #111;">${bookingData.carId}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #030213; border-bottom: 1px solid #eee; padding-bottom: 8px;">Schedule & Duration</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 6px 0; color: #666; width: 40%;"><strong>Pickup Date/Time:</strong></td>
+                <td style="padding: 6px 0; color: #111;">${bookingData.pickupDate} at ${bookingData.pickupTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #666;"><strong>Drop Date/Time:</strong></td>
+                <td style="padding: 6px 0; color: #111;">${bookingData.dropDate} at ${bookingData.dropTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #666;"><strong>Total Duration:</strong></td>
+                <td style="padding: 6px 0; color: #111; font-weight: bold;">${bookingData.durationDays} Day(s)</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background-color: #f7f7f7; border: 1px solid #e5e5e5; border-radius: 8px; padding: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="color: #666; font-size: 14px;"><strong>Booking ID:</strong> <code style="background-color: #eee; padding: 2px 6px; border-radius: 4px;">${bookingData.bookingId}</code></span>
+            </div>
+            <div style="text-align: right; margin-top: 5px;">
+              <span style="color: #666; font-size: 14px; display: block;">Total Amount:</span>
+              <strong style="color: #d4183d; font-size: 20px;">₹${bookingData.totalAmount}</strong>
+            </div>
+          </div>
+
+          <div style="text-align: center; color: #888; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
+            This email was automatically generated by the My Car Hub Platform booking scheduler.
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    // Quiet error handling
+  }
+};
+
+// Helper to generate a PDF receipt in-memory
+const generateReceiptPDF = (bookingData) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const chunks = [];
+
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', (err) => reject(err));
+
+      // --- Brand Header ---
+      doc.fillColor('#d4183d').fontSize(26).font('Helvetica-Bold').text('My Car Hub', 50, 50);
+      doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold').text('PREMIUM RENTAL SERVICES', 50, 80);
+      
+      // Receipt Details (Top Right)
+      doc.fillColor('#333333').fontSize(18).font('Helvetica-Bold').text('RENTAL CONFIRMATION', 350, 50, { align: 'right', width: 195 });
+      doc.fillColor('#555555').fontSize(10).font('Helvetica');
+      doc.text(`Booking Ref: REC-${bookingData.bookingId}`, 350, 75, { align: 'right', width: 195 });
+      doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, 350, 90, { align: 'right', width: 195 });
+      
+      // Decorative line separator
+      doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, 115).lineTo(545, 115).stroke();
+      
+      // --- Columns Grid: Customer & Reservation Info ---
+      // Left Column: Customer Info
+      doc.fillColor('#333333').fontSize(12).font('Helvetica-Bold').text('Customer Information', 50, 140);
+      doc.fillColor('#555555').fontSize(10).font('Helvetica');
+      doc.text(`Full Name: ${bookingData.customerName}`, 50, 160);
+      doc.text(`Email Address: ${bookingData.email || 'N/A'}`, 50, 175);
+      doc.text(`Phone Number: ${bookingData.phone}`, 50, 190);
+      
+      // Right Column: Rental Details
+      doc.fillColor('#333333').fontSize(12).font('Helvetica-Bold').text('Vehicle Information', 300, 140);
+      doc.fillColor('#555555').fontSize(10).font('Helvetica');
+      doc.text(`Car Reserved: ${bookingData.carName}`, 300, 160);
+      doc.text(`Vehicle ID: ${bookingData.carId}`, 300, 175);
+      doc.text(`Rental Duration: ${bookingData.durationDays} Day(s)`, 300, 190);
+      
+      // Decorative separator
+      doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, 220).lineTo(545, 220).stroke();
+      
+      // --- Table Section: Schedule Details ---
+      // Table Header Background
+      doc.rect(50, 240, 495, 25).fill('#d4183d');
+      doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold');
+      doc.text('RESERVATION TIMELINE', 65, 248);
+      doc.text('PICKUP TIME', 230, 248);
+      doc.text('DROP TIME', 390, 248);
+      
+      // Table Rows
+      doc.fillColor('#333333').fontSize(10).font('Helvetica-Bold').text('Self-Drive Rental Slot', 65, 280);
+      doc.fillColor('#666666').font('Helvetica').text(`${bookingData.pickupDate}`, 230, 280);
+      doc.text(`at ${bookingData.pickupTime}`, 230, 295);
+      doc.text(`${bookingData.dropDate}`, 390, 280);
+      doc.text(`at ${bookingData.dropTime}`, 390, 295);
+      
+      // Separator
+      doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, 325).lineTo(545, 325).stroke();
+      
+      // --- Pricing and Booking Summary ---
+      doc.fillColor('#333333').fontSize(12).font('Helvetica-Bold').text('Booking Cost Summary', 50, 350);
+      doc.fillColor('#555555').fontSize(10).font('Helvetica');
+      doc.text('Booking Status: Confirmed', 50, 370);
+      doc.text('Payment Option: Pay at Pickup / Counter', 50, 385);
+      doc.text('Billing Basis: Daily Rate Basis', 50, 400);
+      
+      // Pricing Box (Right Card)
+      doc.rect(340, 350, 205, 70).fill('#fcfcfc');
+      doc.strokeColor('#d4183d').lineWidth(1).rect(340, 350, 205, 70).stroke();
+      
+      doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold').text('ESTIMATED TOTAL COST', 355, 365);
+      doc.fillColor('#d4183d').fontSize(20).font('Helvetica-Bold').text(`₹${bookingData.totalAmount.toLocaleString('en-IN')}`, 355, 385);
+      
+      // --- Terms and Notes Section ---
+      doc.fillColor('#333333').fontSize(11).font('Helvetica-Bold').text('Rental Terms & Conditions', 50, 460);
+      doc.fillColor('#777777').fontSize(8).font('Helvetica');
+      const terms = [
+        "1. Security Deposit: A refundable security deposit may be required at the time of pickup.",
+        "2. Driving License: Must present original valid Indian Driving License at time of vehicle hand-over.",
+        "3. Fuel Policy: Vehicle must be returned with the same fuel level as at pickup, or refueling charges apply.",
+        "4. Extension: Rental extensions are subject to vehicle availability and must be requested 6 hours in advance.",
+        "5. Speed Limit: Adhere to the speed limits as prescribed by local laws. Excess speed penalties apply."
+      ];
+      let termsY = 480;
+      terms.forEach((term) => {
+        doc.text(term, 50, termsY);
+        termsY += 15;
+      });
+      
+      // --- Footer Section ---
+      const footerY = 700;
+      doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, footerY).lineTo(545, footerY).stroke();
+      
+      doc.fillColor('#999999').fontSize(9).font('Helvetica');
+      doc.text('Thank you for choosing My Car Hub!', 50, footerY + 15, { align: 'center', width: 495 });
+      doc.text('For queries, contact support at info@mycarhub.com or call +91 9876543210', 50, footerY + 30, { align: 'center', width: 495 });
+      doc.text('This is a computer-generated confirmation receipt and does not require a physical signature.', 50, footerY + 45, { align: 'center', width: 495 });
+      
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+// Helper to send a confirmation email with PDF receipt
+const sendConfirmationEmail = async (bookingData) => {
+  const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
+  const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
+  const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
+
+  if (!EMAIL_USER || !EMAIL_PASS) {
+    return;
+  }
+
+  try {
+    // Generate PDF receipt buffer
+    const pdfBuffer = await generateReceiptPDF(bookingData);
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+    });
+
+    const toEmails = [bookingData.email];
+    const bccEmails = [OWNER_EMAIL || 'info@mycarhub.com'];
+
+    const mailOptions = {
+      from: `"My Car Hub Bookings" <${EMAIL_USER}>`,
+      to: toEmails.join(', '),
+      bcc: bccEmails.join(', '),
+      subject: `🎉 Booking Confirmed & Summary - ID: ${bookingData.bookingId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
+          <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
+            <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub</h1>
+            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">BOOKING CONFIRMED & RESERVED</p>
+          </div>
+          
+          <div style="margin-bottom: 25px; text-align: center;">
+            <h2 style="color: #2e7d32; margin: 0 0 10px 0;">Dear ${bookingData.customerName},</h2>
+            <p style="color: #444; font-size: 15px; line-height: 1.6; margin: 0;">
+              Your car rental reservation has been <strong>successfully verified and confirmed</strong> by the My Car Hub administration team. 
+              We have attached a copy of your <strong>official booking summary</strong> in PDF format to this email. Kindly present it at the counter at the time of pickup.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
+            <h3 style="color: #030213; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 6px; font-size: 14px;">SUMMARY OF YOUR RENTAL</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: #666; width: 40%;"><strong>Vehicle Reserved:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Booking ID:</strong></td>
+                <td style="padding: 4px 0; color: #111;"><code>${bookingData.bookingId}</code></td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Pickup Schedule:</strong></td>
+                <td style="padding: 4px 0; color: #111;">${bookingData.pickupDate} at ${bookingData.pickupTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Drop Schedule:</strong></td>
+                <td style="padding: 4px 0; color: #111;">${bookingData.dropDate} at ${bookingData.dropTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Rental Duration:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.durationDays} Day(s)</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Estimated Booking Cost:</strong></td>
+                <td style="padding: 4px 0; color: #d4183d; font-weight: bold; font-size: 15px;">₹${bookingData.totalAmount}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Payment:</strong></td>
+                <td style="padding: 4px 0; color: #555;">Pay at Counter / Pickup</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+            <p style="color: #1e3a8a; font-size: 12px; margin: 0; line-height: 1.5; text-align: center;">
+              <strong>ℹ️ Pickup Instructions:</strong> Please remember to bring your original, valid <strong>Driving License</strong> and an <strong>Aadhar/Govt ID card</strong> at the time of vehicle hand-over. 
+            </p>
+          </div>
+
+          <div style="text-align: center; color: #888; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
+            This email was automatically generated by the My Car Hub Platform booking system.
+          </div>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: `BookingSummary-${bookingData.bookingId}.pdf`,
+          content: pdfBuffer
+        }
+      ]
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    // Quiet error handling
+  }
+};
+
+// GET all bookings
+router.get('/', async (req, res) => {
+  try {
+    const bookings = await Booking.find({}).sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// POST a new booking
+router.post('/', async (req, res) => {
+  try {
+    const {
+      carId,
+      carName,
+      customerName,
+      email,
+      phone,
+      pickupDate,
+      pickupTime,
+      dropDate,
+      dropTime,
+      durationDays,
+      totalAmount,
+    } = req.body;
+
+    // Secure multi-layer server-side validation
+    const nameRegex = /^[a-zA-Z\s]{3,50}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[6-9]\d{9}$/;
+
+    if (!customerName || !nameRegex.test(customerName)) {
+      return res.status(400).json({ message: 'Invalid Customer Name. Name must be letters and spaces only, between 3 to 50 characters.' });
+    }
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid Email Address.' });
+    }
+    if (!phone || !phoneRegex.test(phone.replace(/\D/g, ''))) {
+      return res.status(400).json({ message: 'Invalid Phone Number. Must be a valid 10-digit Indian mobile number.' });
+    }
+    if (!pickupDate || !pickupTime || !dropDate || !dropTime) {
+      return res.status(400).json({ message: 'All date and time fields are required.' });
+    }
+
+    const bookingId = `MCH-${Math.floor(Math.random() * 90000) + 10000}`;
+
+    const booking = new Booking({
+      bookingId,
+      carId,
+      carName,
+      customerName,
+      email,
+      phone,
+      pickupDate,
+      pickupTime,
+      dropDate,
+      dropTime,
+      durationDays,
+      totalAmount,
+      status: 'Pending',
+    });
+
+    const createdBooking = await booking.save();
+
+    // Trigger email alert asynchronously
+    sendBookingEmail(createdBooking);
+
+    res.status(201).json(createdBooking);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// PUT (update) a booking's status
+router.put('/:id', async (req, res) => {
+  try {
+    const booking = await Booking.findOne({ bookingId: req.params.id });
+
+    if (booking) {
+      const oldStatus = booking.status;
+      const newStatus = req.body.status || booking.status;
+      
+      booking.status = newStatus;
+      const updatedBooking = await booking.save();
+
+      // Trigger booking confirmation email with PDF summary if transitioned to Confirmed
+      if (newStatus === 'Confirmed' && oldStatus !== 'Confirmed') {
+        sendConfirmationEmail(updatedBooking);
+
+        // Auto-mark the car as booked and record the drop date as availability date
+        try {
+          await Car.findOneAndUpdate(
+            { id: updatedBooking.carId },
+            { isBooked: true, availableFrom: updatedBooking.dropDate }
+          );
+        } catch (carErr) {
+          // Quiet error handling
+        }
+      }
+
+      // Revert car availability when booking is Cancelled or Completed from Confirmed
+      if ((newStatus === 'Cancelled' || newStatus === 'Completed') && oldStatus === 'Confirmed') {
+        try {
+          await Car.findOneAndUpdate(
+            { id: updatedBooking.carId },
+            { isBooked: false, availableFrom: '' }
+          );
+        } catch (carErr) {
+          // Quiet error handling
+        }
+      }
+
+      res.json(updatedBooking);
+    } else {
+      res.status(404).json({ message: 'Booking not found' });
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+export default router;

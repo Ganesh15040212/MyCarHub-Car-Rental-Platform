@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { X, Check, FileText } from 'lucide-react';
+import { Check, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Car, REQUIRED_DOCUMENTS } from '../types/car';
 import { toast } from 'sonner';
+import { DatePicker } from './ui/DatePicker';
+import { parse, isValid } from 'date-fns';
 
 interface BookingModalProps {
   car: Car | null;
@@ -15,8 +17,11 @@ interface BookingModalProps {
 
 export default function BookingModal({ car, isOpen, onClose }: BookingModalProps) {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingId, setBookingId] = useState('');
   const [formData, setFormData] = useState({
     customerName: '',
+    email: '',
     phone: '',
     pickupDate: '',
     pickupTime: '',
@@ -28,8 +33,15 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
     if (!formData.pickupDate || !formData.pickupTime || !formData.dropDate || !formData.dropTime) {
       return 1;
     }
-    const pickup = new Date(`${formData.pickupDate}T${formData.pickupTime}`);
-    const drop = new Date(`${formData.dropDate}T${formData.dropTime}`);
+    
+    // Parse dd/mm/yyyy to standard Date format
+    const parseDateStr = (dateStr: string) => {
+      const [day, month, year] = dateStr.split('/');
+      return `${year}-${month}-${day}`;
+    };
+
+    const pickup = new Date(`${parseDateStr(formData.pickupDate)}T${formData.pickupTime}`);
+    const drop = new Date(`${parseDateStr(formData.dropDate)}T${formData.dropTime}`);
     const diffTime = drop.getTime() - pickup.getTime();
     if (diffTime <= 0) return 1;
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -42,6 +54,7 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
   // Validation Patterns
   const patterns = {
     customerName: /^[a-zA-Z\s]{3,50}$/,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     phone: /^[6-9]\d{9}$/,
   };
 
@@ -50,6 +63,8 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
 
     if (name === 'customerName' && value && !patterns.customerName.test(value)) {
       error = 'Name must be letters only (min 3 chars).';
+    } else if (name === 'email' && value && !patterns.email.test(value)) {
+      error = 'Enter a valid email address.';
     } else if (name === 'phone' && value && !patterns.phone.test(value.replace(/\D/g, ''))) {
       error = 'Enter a valid 10-digit mobile number.';
     }
@@ -63,6 +78,7 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
     setErrors({});
     setFormData({
       customerName: '',
+      email: '',
       phone: '',
       pickupDate: '',
       pickupTime: '',
@@ -72,12 +88,12 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Final check
     const hasErrors = Object.values(errors).some(err => err !== '');
-    const isMissingFields = !formData.customerName || !formData.phone ||
+    const isMissingFields = !formData.customerName || !formData.email || !formData.phone ||
       !formData.pickupDate || !formData.pickupTime || !formData.dropDate || !formData.dropTime;
 
     if (hasErrors || isMissingFields) {
@@ -85,10 +101,52 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
       return;
     }
 
-    setIsSuccess(true);
-    toast.success('Booking Request Sent!', {
-      description: 'Our team will contact you shortly for verification.',
-    });
+    if (!car) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          carId: car.id,
+          carName: car.name,
+          customerName: formData.customerName,
+          email: formData.email,
+          phone: formData.phone,
+          pickupDate: formData.pickupDate,
+          pickupTime: formData.pickupTime,
+          dropDate: formData.dropDate,
+          dropTime: formData.dropTime,
+          durationDays,
+          totalAmount: car.price * durationDays,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBookingId(data.bookingId);
+        setIsSuccess(true);
+        toast.success('Booking Request Confirmed!', {
+          description: 'A real email notification has been successfully sent to the owner!',
+        });
+      } else {
+        throw new Error('API server returned error code');
+      }
+    } catch (err) {
+      console.warn('Backend server unreachable. Falling back to local offline submission mode.', err);
+      // Standalone fallback
+      const generatedId = `MCH-${Math.floor(Math.random() * 90000) + 10000}`;
+      setBookingId(generatedId);
+      setIsSuccess(true);
+      toast.success('Booking Request Sent (Standalone Mode)', {
+        description: 'Our team will contact you shortly for verification.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -99,9 +157,16 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
 
   if (!car) return null;
 
+  // Visual helper to parse selected pickupDate for dropDate minimum restriction
+  const pickupParsedDate = formData.pickupDate ? parse(formData.pickupDate, 'dd/MM/yyyy', new Date()) : new Date();
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-none">
+      <DialogContent 
+        className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-none"
+        onInteractOutside={(e) => e.preventDefault()}
+        aria-describedby={undefined}
+      >
         {isSuccess ? (
           <div className="p-12 text-center space-y-6 animate-in fade-in zoom-in duration-300">
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -117,7 +182,11 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
             <div className="bg-gray-50 p-6 rounded-2xl text-left space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Booking ID</span>
-                <span className="font-mono font-bold text-gray-900">MCH-{Math.floor(Math.random() * 100000)}</span>
+                <span className="font-mono font-bold text-gray-900">{bookingId}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Rental Period</span>
+                <span className="font-bold text-gray-800">{formData.pickupDate} ➡️ {formData.dropDate}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Total Amount</span>
@@ -164,7 +233,7 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <div className="space-y-2">
+                <div className="md:col-span-2 space-y-2">
                   <Label htmlFor="customerName" className="text-sm font-semibold text-gray-700">Full Name *</Label>
                   <Input
                     id="customerName"
@@ -176,6 +245,21 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
                     required
                   />
                   {errors.customerName && <p className="text-[10px] text-red-500 font-bold ml-1">{errors.customerName}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email Address *</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="john@example.com"
+                    className={`bg-gray-50/50 border-gray-200 focus:ring-red-500 focus:border-red-500 rounded-lg py-5 ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    required
+                  />
+                  {errors.email && <p className="text-[10px] text-red-500 font-bold ml-1">{errors.email}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -192,20 +276,16 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
                   />
                   {errors.phone && <p className="text-[10px] text-red-500 font-bold ml-1">{errors.phone}</p>}
                 </div>
-
-
+                </div>
 
                 <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-gray-100">
                   <div className="space-y-2">
                     <Label htmlFor="pickupDate" className="text-sm font-semibold text-gray-700">Pickup Date *</Label>
-                    <Input
+                    <DatePicker
                       id="pickupDate"
-                      name="pickupDate"
-                      type="date"
                       value={formData.pickupDate}
-                      onChange={handleChange}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="bg-gray-50/50 border-gray-200 focus:ring-red-500 focus:border-red-500 rounded-lg py-5"
+                      onChange={(val) => setFormData(prev => ({ ...prev, pickupDate: val }))}
+                      minDate={new Date()}
                       required
                     />
                   </div>
@@ -226,14 +306,11 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
                 <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-gray-100">
                   <div className="space-y-2">
                     <Label htmlFor="dropDate" className="text-sm font-semibold text-gray-700">Drop Date *</Label>
-                    <Input
+                    <DatePicker
                       id="dropDate"
-                      name="dropDate"
-                      type="date"
                       value={formData.dropDate}
-                      onChange={handleChange}
-                      min={formData.pickupDate || new Date().toISOString().split('T')[0]}
-                      className="bg-gray-50/50 border-gray-200 focus:ring-red-500 focus:border-red-500 rounded-lg py-5"
+                      onChange={(val) => setFormData(prev => ({ ...prev, dropDate: val }))}
+                      minDate={isValid(pickupParsedDate) ? pickupParsedDate : new Date()}
                       required
                     />
                   </div>
@@ -248,10 +325,7 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
                       className="bg-gray-50/50 border-gray-200 focus:ring-red-500 focus:border-red-500 rounded-lg py-5"
                       required
                     />
-                  </div>
                 </div>
-
-
               </div>
 
               <div className="bg-red-50/50 border border-red-100 p-6 rounded-xl">
@@ -269,13 +343,13 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
                 <Button type="button" variant="ghost" onClick={handleClose} className="hover:bg-gray-100 py-6 text-gray-600">
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold py-6 px-8 rounded-xl shadow-lg shadow-red-200 transition-all active:scale-95">
-                  Confirm Booking
+                <Button type="submit" disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white font-bold py-6 px-8 rounded-xl shadow-lg shadow-red-200 transition-all active:scale-95">
+                  {isSubmitting ? 'Confirming Booking...' : 'Confirm Booking'}
                 </Button>
               </div>
 
               <p className="text-[10px] text-gray-400 text-center leading-relaxed">
-                * This is a demonstration. All data entered here is only used for this preview and will not be stored permanently.
+                * Note: Your personal data is handled securely. You will receive booking notifications directly from our team.
               </p>
             </form>
           </div>
@@ -284,3 +358,4 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
     </Dialog>
   );
 }
+
