@@ -142,11 +142,12 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setIsSetupRequired(data.isSetupRequired);
+      } else {
+        setIsSetupRequired(false);
       }
     } catch (e) {
-      // Offline fallback: check if local setup exists
-      const cachedAdmin = localStorage.getItem('mch_offline_admin');
-      setIsSetupRequired(!cachedAdmin);
+      // Default to showing the login screen directly when the backend is unreachable/offline
+      setIsSetupRequired(false);
     }
   };
 
