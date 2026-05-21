@@ -64,7 +64,7 @@ const sendBookingEmail = async (bookingData) => {
                 <td style="padding: 6px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
               </tr>
               <tr>
-                <td style="padding: 6px 0; color: #666;"><strong>Car ID:</strong></td>
+                <td style="padding: 6px 0; color: #666;"><strong>Car Number:</strong></td>
                 <td style="padding: 6px 0; color: #111;">${bookingData.carId}</td>
               </tr>
             </table>
@@ -107,12 +107,12 @@ const sendBookingEmail = async (bookingData) => {
 
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    // Quiet error handling
+    console.error('Error sending booking request email:', error);
   }
 };
 
 // Helper to generate a PDF receipt in-memory
-const generateReceiptPDF = (bookingData) => {
+const generateReceiptPDF = (bookingData, car = null) => {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -127,10 +127,10 @@ const generateReceiptPDF = (bookingData) => {
       doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold').text('PREMIUM RENTAL SERVICES', 50, 80);
       
       // Receipt Details (Top Right)
-      doc.fillColor('#333333').fontSize(18).font('Helvetica-Bold').text('RENTAL CONFIRMATION', 350, 50, { align: 'right', width: 195 });
+      doc.fillColor('#333333').fontSize(18).font('Helvetica-Bold').text('RENTAL CONFIRMATION', 250, 50, { align: 'right', width: 295 });
       doc.fillColor('#555555').fontSize(10).font('Helvetica');
-      doc.text(`Booking Ref: REC-${bookingData.bookingId}`, 350, 75, { align: 'right', width: 195 });
-      doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, 350, 90, { align: 'right', width: 195 });
+      doc.text(`Booking Ref: REC-${bookingData.bookingId}`, 250, 75, { align: 'right', width: 295 });
+      doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, 250, 90, { align: 'right', width: 295 });
       
       // Decorative line separator
       doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, 115).lineTo(545, 115).stroke();
@@ -147,8 +147,12 @@ const generateReceiptPDF = (bookingData) => {
       doc.fillColor('#333333').fontSize(12).font('Helvetica-Bold').text('Vehicle Information', 300, 140);
       doc.fillColor('#555555').fontSize(10).font('Helvetica');
       doc.text(`Car Reserved: ${bookingData.carName}`, 300, 160);
-      doc.text(`Vehicle ID: ${bookingData.carId}`, 300, 175);
-      doc.text(`Rental Duration: ${bookingData.durationDays} Day(s)`, 300, 190);
+      doc.text(`Car Number: ${bookingData.carId}`, 300, 172);
+      const transmission = car ? (car.category === 'automatic' ? 'Automatic' : 'Manual') : 'Self-Drive';
+      const capacity = car ? `${car.seater}-Seater` : '5-Seater';
+      doc.text(`Transmission: ${transmission}`, 300, 184);
+      doc.text(`Seating Capacity: ${capacity}`, 300, 196);
+      doc.text(`Rental Duration: ${bookingData.durationDays} Day(s)`, 300, 208);
       
       // Decorative separator
       doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, 220).lineTo(545, 220).stroke();
@@ -162,7 +166,8 @@ const generateReceiptPDF = (bookingData) => {
       doc.text('DROP TIME', 390, 248);
       
       // Table Rows
-      doc.fillColor('#333333').fontSize(10).font('Helvetica-Bold').text('Self-Drive Rental Slot', 65, 280);
+      const slotLabel = car ? `${car.category === 'automatic' ? 'Automatic' : 'Manual'} Car Rental Slot` : 'Self-Drive Rental Slot';
+      doc.fillColor('#333333').fontSize(10).font('Helvetica-Bold').text(slotLabel, 65, 280);
       doc.fillColor('#666666').font('Helvetica').text(`${bookingData.pickupDate}`, 230, 280);
       doc.text(`at ${bookingData.pickupTime}`, 230, 295);
       doc.text(`${bookingData.dropDate}`, 390, 280);
@@ -183,7 +188,7 @@ const generateReceiptPDF = (bookingData) => {
       doc.strokeColor('#d4183d').lineWidth(1).rect(340, 350, 205, 70).stroke();
       
       doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold').text('ESTIMATED TOTAL COST', 355, 365);
-      doc.fillColor('#d4183d').fontSize(20).font('Helvetica-Bold').text(`₹${bookingData.totalAmount.toLocaleString('en-IN')}`, 355, 385);
+      doc.fillColor('#d4183d').fontSize(20).font('Helvetica-Bold').text(`Rs. ${Number(bookingData.totalAmount || 0).toLocaleString('en-IN')}`, 355, 385);
       
       // --- Terms and Notes Section ---
       doc.fillColor('#333333').fontSize(11).font('Helvetica-Bold').text('Rental Terms & Conditions', 50, 460);
@@ -207,7 +212,7 @@ const generateReceiptPDF = (bookingData) => {
       
       doc.fillColor('#999999').fontSize(9).font('Helvetica');
       doc.text('Thank you for choosing My Car Hub!', 50, footerY + 15, { align: 'center', width: 495 });
-      doc.text('For queries, contact support at info@mycarhub.com or call +91 9876543210', 50, footerY + 30, { align: 'center', width: 495 });
+      doc.text('For queries, contact support at info@mycarhub.com or call +91 9597693716', 50, footerY + 30, { align: 'center', width: 495 });
       doc.text('This is a computer-generated confirmation receipt and does not require a physical signature.', 50, footerY + 45, { align: 'center', width: 495 });
       
       doc.end();
@@ -228,8 +233,16 @@ const sendConfirmationEmail = async (bookingData) => {
   }
 
   try {
+    // Fetch car details
+    let car = null;
+    try {
+      car = await Car.findOne({ id: bookingData.carId });
+    } catch (err) {
+      // Quiet fallback
+    }
+
     // Generate PDF receipt buffer
-    const pdfBuffer = await generateReceiptPDF(bookingData);
+    const pdfBuffer = await generateReceiptPDF(bookingData, car);
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -239,13 +252,11 @@ const sendConfirmationEmail = async (bookingData) => {
       },
     });
 
-    const toEmails = [bookingData.email];
-    const bccEmails = [OWNER_EMAIL || 'info@mycarhub.com'];
+    const toEmails = [bookingData.email, OWNER_EMAIL || 'info@mycarhub.com'];
 
     const mailOptions = {
       from: `"My Car Hub Bookings" <${EMAIL_USER}>`,
       to: toEmails.join(', '),
-      bcc: bccEmails.join(', '),
       subject: `🎉 Booking Confirmed & Summary - ID: ${bookingData.bookingId}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
@@ -267,7 +278,7 @@ const sendConfirmationEmail = async (bookingData) => {
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
               <tr>
                 <td style="padding: 4px 0; color: #666; width: 40%;"><strong>Vehicle Reserved:</strong></td>
-                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.carName}${car ? ` (${car.seater}-Seater ${car.category === 'automatic' ? 'Automatic' : 'Manual'})` : ''}</td>
               </tr>
               <tr>
                 <td style="padding: 4px 0; color: #666;"><strong>Booking ID:</strong></td>
@@ -317,7 +328,153 @@ const sendConfirmationEmail = async (bookingData) => {
 
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    // Quiet error handling
+    console.error('Error sending confirmation email:', error);
+  }
+};
+
+// Helper to send a cancellation email
+const sendCancellationEmail = async (bookingData) => {
+  const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
+  const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
+  const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
+
+  if (!EMAIL_USER || !EMAIL_PASS) {
+    return;
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+    });
+
+    const toEmails = [bookingData.email, OWNER_EMAIL || 'info@mycarhub.com'];
+
+    const mailOptions = {
+      from: `"My Car Hub Bookings" <${EMAIL_USER}>`,
+      to: toEmails.join(', '),
+      subject: `🛑 Booking Cancelled - ID: ${bookingData.bookingId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
+          <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
+            <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub</h1>
+            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">BOOKING CANCELLED</p>
+          </div>
+          
+          <div style="margin-bottom: 25px; text-align: center;">
+            <h2 style="color: #c62828; margin: 0 0 10px 0;">Dear ${bookingData.customerName},</h2>
+            <p style="color: #444; font-size: 15px; line-height: 1.6; margin: 0;">
+              Your car rental reservation with ID <strong>${bookingData.bookingId}</strong> has been <strong>Cancelled</strong>. 
+            </p>
+            <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 10px;">
+              If you did not request this cancellation or have any questions, please contact our support team immediately.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
+            <h3 style="color: #030213; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 6px; font-size: 14px;">CANCELLED BOOKING DETAILS</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: #666; width: 40%;"><strong>Vehicle:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Booking ID:</strong></td>
+                <td style="padding: 4px 0; color: #111;"><code>${bookingData.bookingId}</code></td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Amount:</strong></td>
+                <td style="padding: 4px 0; color: #d4183d; font-weight: bold;">₹${bookingData.totalAmount}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; color: #888; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
+            This email was automatically generated by the My Car Hub Platform booking system.
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending cancellation email:', error);
+  }
+};
+
+// Helper to send a completion email
+const sendCompletionEmail = async (bookingData) => {
+  const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
+  const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
+  const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
+
+  if (!EMAIL_USER || !EMAIL_PASS) {
+    return;
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+    });
+
+    const toEmails = [bookingData.email, OWNER_EMAIL || 'info@mycarhub.com'];
+
+    const mailOptions = {
+      from: `"My Car Hub Bookings" <${EMAIL_USER}>`,
+      to: toEmails.join(', '),
+      subject: `🏁 Booking Completed Successfully - ID: ${bookingData.bookingId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
+          <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
+            <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub</h1>
+            <p style="color: #2e7d32; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">RENTAL TRIP COMPLETED</p>
+          </div>
+          
+          <div style="margin-bottom: 25px; text-align: center;">
+            <h2 style="color: #2e7d32; margin: 0 0 10px 0;">Dear ${bookingData.customerName},</h2>
+            <p style="color: #444; font-size: 15px; line-height: 1.6; margin: 0;">
+              Thank you for choosing My Car Hub! Your car rental reservation with ID <strong>${bookingData.bookingId}</strong> has been marked as <strong>Completed</strong>.
+            </p>
+            <p style="color: #555; font-size: 14px; line-height: 1.6; margin-top: 10px;">
+              We hope you had a safe and comfortable journey with our vehicle. We look forward to serving you again in the future!
+            </p>
+          </div>
+
+          <div style="margin-bottom: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
+            <h3 style="color: #030213; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 6px; font-size: 14px;">RENTAL SUMMARY</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: #666; width: 40%;"><strong>Vehicle Rented:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Booking ID:</strong></td>
+                <td style="padding: 4px 0; color: #111;"><code>${bookingData.bookingId}</code></td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Total Amount Paid:</strong></td>
+                <td style="padding: 4px 0; color: #2e7d32; font-weight: bold;">₹${bookingData.totalAmount}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; color: #888; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
+            This email was automatically generated by the My Car Hub Platform booking system.
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending completion email:', error);
   }
 };
 
@@ -420,6 +577,16 @@ router.put('/:id', async (req, res) => {
         } catch (carErr) {
           // Quiet error handling
         }
+      }
+
+      // Send Cancellation email if transitioned to Cancelled
+      if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
+        sendCancellationEmail(updatedBooking);
+      }
+
+      // Send Completion email if transitioned to Completed
+      if (newStatus === 'Completed' && oldStatus !== 'Completed') {
+        sendCompletionEmail(updatedBooking);
       }
 
       // Revert car availability when booking is Cancelled or Completed from Confirmed

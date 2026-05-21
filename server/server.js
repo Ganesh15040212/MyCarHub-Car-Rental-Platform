@@ -10,6 +10,7 @@ import feedbackRoutes from './routes/feedbackRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import Car from './models/Car.js';
 import Admin from './models/Admin.js';
+import Booking from './models/Booking.js';
 import { carsSeedData } from './config/carsSeed.js';
 
 // Load environmental variables relative to current file in ESM
@@ -39,7 +40,16 @@ app.get('/', (req, res) => {
 // Automatic Database Seeding
 const seedDatabase = async () => {
   try {
-    // 1. Seed cars
+    // 1. Migrate numeric vehicle IDs if present
+    const hasInsecureIds = await Car.exists({ id: { $regex: /^\d+$/ } });
+    if (hasInsecureIds) {
+      console.log('⚠️ Numeric vehicle IDs detected in MongoDB. Dropping collections for clean seeder migration...');
+      await Car.deleteMany({});
+      await Booking.deleteMany({});
+      console.log('Migration cleanup complete. Proceeding with fresh Indian Car Number seeding...');
+    }
+
+    // 2. Seed cars
     const carCount = await Car.countDocuments();
     if (carCount === 0) {
       console.log('Database empty! Auto-seeding default cars dataset...');

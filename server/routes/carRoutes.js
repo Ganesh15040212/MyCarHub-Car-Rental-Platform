@@ -1,5 +1,6 @@
 import express from 'express';
 import Car from '../models/Car.js';
+import Booking from '../models/Booking.js';
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.post('/', async (req, res) => {
     // Check if ID already exists
     const carExists = await Car.findOne({ id });
     if (carExists) {
-      return res.status(400).json({ message: 'Car with this ID already exists' });
+      return res.status(400).json({ message: 'Car with this registration number already exists' });
     }
 
     const car = new Car({
@@ -62,6 +63,17 @@ router.put('/:id', async (req, res) => {
     const car = await Car.findOne({ id: req.params.id });
 
     if (car) {
+      // If registration number/ID has changed, verify uniqueness and cascade-update existing bookings
+      if (req.body.id && req.body.id !== car.id) {
+        const carExists = await Car.findOne({ id: req.body.id });
+        if (carExists) {
+          return res.status(400).json({ message: 'Car with this registration number already exists' });
+        }
+        const oldId = car.id;
+        car.id = req.body.id;
+        await Booking.updateMany({ carId: oldId }, { carId: req.body.id });
+      }
+
       car.name = req.body.name || car.name;
       car.price = req.body.price !== undefined ? req.body.price : car.price;
       car.seater = req.body.seater || car.seater;

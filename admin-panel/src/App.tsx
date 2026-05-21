@@ -16,8 +16,10 @@ import {
   Database, 
   AlertTriangle,
   RefreshCw,
-  Users
+  Users,
+  Menu
 } from 'lucide-react';
+
 import { Toaster, toast } from 'sonner';
 
 // Backend API Base URL
@@ -64,6 +66,7 @@ interface IFeedback {
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSetupRequired, setIsSetupRequired] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Login Form States
   const [email, setEmail] = useState('');
@@ -399,9 +402,19 @@ export default function App() {
     }
   };
 
+  const generateRandomCarNumber = () => {
+    const states = ['MH', 'KA', 'DL', 'HR', 'UP', 'GJ', 'TS', 'TN', 'KL', 'AP'];
+    const state = states[Math.floor(Math.random() * states.length)];
+    const district = Math.floor(10 + Math.random() * 90).toString();
+    const letters = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    const num = Math.floor(1000 + Math.random() * 9000).toString();
+    return `${state}${district}${letters}${num}`; // No hyphens, e.g. TN67GH0412
+  };
+
   const resetCarFormData = () => {
+    const randomId = generateRandomCarNumber();
     setCarFormData({
-      id: '',
+      id: randomId,
       name: '',
       price: 1500,
       seater: 5,
@@ -607,12 +620,44 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row text-gray-900">
+    <div className="h-screen w-screen bg-slate-50 flex flex-col md:flex-row text-gray-900 overflow-hidden">
+      {/* MOBILE TOP BAR */}
+      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 md:hidden sticky top-0 z-20 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-gray-900 leading-none">My Car Hub</h2>
+            <span className="text-[9px] text-red-600 font-bold uppercase tracking-wider">Control Panel</span>
+          </div>
+          {isBackendConnected ? (
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Database Connected" />
+          ) : (
+            <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Offline standalone mode active" />
+          )}
+        </div>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all text-gray-700 cursor-pointer shadow-sm"
+          aria-label="Toggle Navigation Menu"
+        >
+          {isMobileMenuOpen ? <X className="w-5 h-5 text-red-600" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </header>
+
+      {/* Backdrop overlay for mobile sidebar drawer */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-30 md:hidden animate-in fade-in duration-200" 
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR NAVIGATION */}
-      <aside className="w-full md:w-64 bg-gray-50 border-r border-gray-200 flex flex-col justify-between shrink-0">
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-50 border-r border-gray-200 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out md:static md:translate-x-0 h-full ${
+        isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'
+      }`}>
         <div>
-          {/* Logo Brand Header */}
-          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          {/* Logo Brand Header (visible on desktop) */}
+          <div className="p-6 border-b border-gray-200 hidden md:flex items-center justify-between">
             <div>
               <h2 className="text-xl font-black tracking-tight text-gray-900">My Car Hub</h2>
               <span className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Control Panel</span>
@@ -624,9 +669,26 @@ export default function App() {
             )}
           </div>
 
+          {/* Close Menu Button on Mobile Sidebar */}
+          <div className="p-4 border-b border-gray-100 flex md:hidden items-center justify-between bg-white">
+            <div>
+              <h2 className="text-lg font-black tracking-tight text-gray-900 leading-none">Navigation</h2>
+              <span className="text-[9px] text-red-600 font-bold uppercase">Menu options</span>
+            </div>
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="w-8 h-8 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center border border-red-200 cursor-pointer text-red-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
           <nav className="p-4 space-y-1">
             <button
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => {
+                setActiveTab('dashboard');
+                setIsMobileMenuOpen(false);
+              }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'dashboard'
                   ? 'bg-red-600 text-white shadow-lg shadow-red-600/15'
@@ -638,7 +700,10 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('cars')}
+              onClick={() => {
+                setActiveTab('cars');
+                setIsMobileMenuOpen(false);
+              }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'cars'
                   ? 'bg-red-600 text-white shadow-lg shadow-red-600/15'
@@ -650,7 +715,10 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('bookings')}
+              onClick={() => {
+                setActiveTab('bookings');
+                setIsMobileMenuOpen(false);
+              }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'bookings'
                   ? 'bg-red-600 text-white shadow-lg shadow-red-600/15'
@@ -667,7 +735,10 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('feedbacks')}
+              onClick={() => {
+                setActiveTab('feedbacks');
+                setIsMobileMenuOpen(false);
+              }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'feedbacks'
                   ? 'bg-red-600 text-white shadow-lg shadow-red-600/15'
@@ -694,7 +765,10 @@ export default function App() {
           )}
 
           <button
-            onClick={handleLogOut}
+            onClick={() => {
+              handleLogOut();
+              setIsMobileMenuOpen(false);
+            }}
             className="w-full h-12 px-4 rounded-xl text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 text-sm font-semibold transition-all cursor-pointer"
           >
             <LogOut className="w-4 h-4 text-red-600" />
@@ -704,9 +778,9 @@ export default function App() {
       </aside>
 
       {/* MAIN VIEW AREA */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto max-h-screen bg-slate-50/50">
+      <main className="flex-1 p-4 sm:p-6 md:p-10 overflow-y-auto bg-slate-50/50">
         {/* VIEW HEADER */}
-        <header className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-gray-200">
           <div>
             <h1 className="text-3xl font-black capitalize tracking-tight text-gray-900">{activeTab} Overview</h1>
             <p className="text-gray-500 text-sm mt-1">Real-time business intelligence and inventory sync.</p>
@@ -725,39 +799,47 @@ export default function App() {
         {activeTab === 'dashboard' && (
           <div className="space-y-8 animate-in fade-in duration-300">
             {/* Metric KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 relative overflow-hidden">
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Gross Income</p>
-                <h3 className="text-3xl font-black text-red-600 mt-2">₹{totalEarnings.toLocaleString('en-IN')}</h3>
-                <p className="text-[10px] text-gray-500 mt-2">Earned from {confirmedBookings.length} confirmed orders</p>
-                <div className="absolute right-4 bottom-4 w-12 h-12 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 flex justify-between items-start transition-all hover:shadow-lg">
+                <div className="flex-1 min-w-0 pr-4">
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Gross Income</p>
+                  <h3 className="text-3xl font-black text-red-600 mt-2 truncate">₹{totalEarnings.toLocaleString('en-IN')}</h3>
+                  <p className="text-[10px] text-gray-500 mt-2">Earned from {confirmedBookings.length} confirmed orders</p>
+                </div>
+                <div className="w-12 h-12 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-6 h-6 text-red-600" />
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 relative overflow-hidden">
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Active Bookings</p>
-                <h3 className="text-3xl font-black text-gray-900 mt-2">{activeBookings.length}</h3>
-                <p className="text-[10px] text-gray-500 mt-2">Rentals currently active in client tier</p>
-                <div className="absolute right-4 bottom-4 w-12 h-12 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-center">
+              <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 flex justify-between items-start transition-all hover:shadow-lg">
+                <div className="flex-1 min-w-0 pr-4">
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Active Bookings</p>
+                  <h3 className="text-3xl font-black text-gray-900 mt-2 truncate">{activeBookings.length}</h3>
+                  <p className="text-[10px] text-gray-500 mt-2">Rentals currently active in client tier</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-center shrink-0">
                   <CalendarIcon className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 relative overflow-hidden">
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Cars Fleet</p>
-                <h3 className="text-3xl font-black text-gray-900 mt-2">{cars.length}</h3>
-                <p className="text-[10px] text-gray-500 mt-2">Active listings across catalog</p>
-                <div className="absolute right-4 bottom-4 w-12 h-12 bg-green-50 rounded-2xl border border-green-100 flex items-center justify-center">
+              <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 flex justify-between items-start transition-all hover:shadow-lg">
+                <div className="flex-1 min-w-0 pr-4">
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Cars Fleet</p>
+                  <h3 className="text-3xl font-black text-gray-900 mt-2 truncate">{cars.length}</h3>
+                  <p className="text-[10px] text-gray-500 mt-2">Active listings across catalog</p>
+                </div>
+                <div className="w-12 h-12 bg-green-50 rounded-2xl border border-green-100 flex items-center justify-center shrink-0">
                   <Car className="w-6 h-6 text-green-600" />
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 relative overflow-hidden">
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Unread Feedback</p>
-                <h3 className="text-3xl font-black text-blue-600 mt-2">{unreadFeedbacks.length}</h3>
-                <p className="text-[10px] text-gray-500 mt-2">New messages in contact queue</p>
-                <div className="absolute right-4 bottom-4 w-12 h-12 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-center">
+              <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 flex justify-between items-start transition-all hover:shadow-lg">
+                <div className="flex-1 min-w-0 pr-4">
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Unread Feedback</p>
+                  <h3 className="text-3xl font-black text-blue-600 mt-2 truncate">{unreadFeedbacks.length}</h3>
+                  <p className="text-[10px] text-gray-500 mt-2">New messages in contact queue</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-center shrink-0">
                   <MessageSquare className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
@@ -769,7 +851,7 @@ export default function App() {
               
               {bookings.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-gray-800">
+                  <table className="w-full min-w-[800px] text-left text-sm text-gray-800">
                     <thead>
                       <tr className="border-b border-gray-200 text-gray-500 text-xs font-bold uppercase">
                         <th className="py-4">Booking ID</th>
@@ -814,7 +896,7 @@ export default function App() {
         {activeTab === 'cars' && (
           <div className="space-y-6 animate-in fade-in duration-300">
             {/* Toolbar header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <p className="text-gray-400 text-sm font-semibold">{cars.length} cars in catalog.</p>
               <button
                 onClick={() => {
@@ -909,14 +991,13 @@ export default function App() {
                   <form onSubmit={handleCarSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Unique Car ID *</label>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Car Number *</label>
                         <input
                           type="text"
                           value={carFormData.id}
                           onChange={e => setCarFormData(prev => ({ ...prev, id: e.target.value }))}
-                          disabled={!!editingCar} // Block id change on Edit
-                          placeholder="E.g. 44"
-                          className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900 disabled:bg-gray-100 disabled:text-gray-400"
+                          placeholder="E.g. TN67GH0412"
+                          className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
                           required
                         />
                       </div>
@@ -1046,7 +1127,7 @@ export default function App() {
 
             {bookings.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-gray-800">
+                <table className="w-full min-w-[1000px] text-left text-sm text-gray-800">
                   <thead>
                     <tr className="border-b border-gray-200 text-gray-500 text-xs font-bold uppercase">
                       <th className="py-4">Booking ID</th>

@@ -33,7 +33,7 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
     if (!formData.pickupDate || !formData.pickupTime || !formData.dropDate || !formData.dropTime) {
       return 1;
     }
-    
+
     // Parse dd/mm/yyyy to standard Date format
     const parseDateStr = (dateStr: string) => {
       const [day, month, year] = dateStr.split('/');
@@ -130,7 +130,7 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
         setBookingId(data.bookingId);
         setIsSuccess(true);
         toast.success('Booking Request Confirmed!', {
-          description: 'A real email notification has been successfully sent to the owner!',
+          description: 'A Email notification has been successfully sent to the owner!',
         });
       } else {
         throw new Error('API server returned error code');
@@ -162,7 +162,7 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent 
+      <DialogContent
         className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-none"
         onInteractOutside={(e) => e.preventDefault()}
         aria-describedby={undefined}
@@ -276,55 +276,55 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
                   />
                   {errors.phone && <p className="text-[10px] text-red-500 font-bold ml-1">{errors.phone}</p>}
                 </div>
-                </div>
+              </div>
 
-                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-gray-100">
-                  <div className="space-y-2">
-                    <Label htmlFor="pickupDate" className="text-sm font-semibold text-gray-700">Pickup Date *</Label>
-                    <DatePicker
-                      id="pickupDate"
-                      value={formData.pickupDate}
-                      onChange={(val) => setFormData(prev => ({ ...prev, pickupDate: val }))}
-                      minDate={new Date()}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pickupTime" className="text-sm font-semibold text-gray-700">Pickup Time *</Label>
-                    <Input
-                      id="pickupTime"
-                      name="pickupTime"
-                      type="time"
-                      value={formData.pickupTime}
-                      onChange={handleChange}
-                      className="bg-gray-50/50 border-gray-200 focus:ring-red-500 focus:border-red-500 rounded-lg py-5"
-                      required
-                    />
-                  </div>
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-gray-100">
+                <div className="space-y-2">
+                  <Label htmlFor="pickupDate" className="text-sm font-semibold text-gray-700">Pickup Date *</Label>
+                  <DatePicker
+                    id="pickupDate"
+                    value={formData.pickupDate}
+                    onChange={(val) => setFormData(prev => ({ ...prev, pickupDate: val }))}
+                    minDate={new Date()}
+                    required
+                  />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pickupTime" className="text-sm font-semibold text-gray-700">Pickup Time *</Label>
+                  <Input
+                    id="pickupTime"
+                    name="pickupTime"
+                    type="time"
+                    value={formData.pickupTime}
+                    onChange={handleChange}
+                    className="bg-gray-50/50 border-gray-200 focus:ring-red-500 focus:border-red-500 rounded-lg py-5"
+                    required
+                  />
+                </div>
+              </div>
 
-                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-gray-100">
-                  <div className="space-y-2">
-                    <Label htmlFor="dropDate" className="text-sm font-semibold text-gray-700">Drop Date *</Label>
-                    <DatePicker
-                      id="dropDate"
-                      value={formData.dropDate}
-                      onChange={(val) => setFormData(prev => ({ ...prev, dropDate: val }))}
-                      minDate={isValid(pickupParsedDate) ? pickupParsedDate : new Date()}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dropTime" className="text-sm font-semibold text-gray-700">Drop Time *</Label>
-                    <Input
-                      id="dropTime"
-                      name="dropTime"
-                      type="time"
-                      value={formData.dropTime}
-                      onChange={handleChange}
-                      className="bg-gray-50/50 border-gray-200 focus:ring-red-500 focus:border-red-500 rounded-lg py-5"
-                      required
-                    />
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-gray-100">
+                <div className="space-y-2">
+                  <Label htmlFor="dropDate" className="text-sm font-semibold text-gray-700">Drop Date *</Label>
+                  <DatePicker
+                    id="dropDate"
+                    value={formData.dropDate}
+                    onChange={(val) => setFormData(prev => ({ ...prev, dropDate: val }))}
+                    minDate={isValid(pickupParsedDate) ? pickupParsedDate : new Date()}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dropTime" className="text-sm font-semibold text-gray-700">Drop Time *</Label>
+                  <Input
+                    id="dropTime"
+                    name="dropTime"
+                    type="time"
+                    value={formData.dropTime}
+                    onChange={handleChange}
+                    className="bg-gray-50/50 border-gray-200 focus:ring-red-500 focus:border-red-500 rounded-lg py-5"
+                    required
+                  />
                 </div>
               </div>
 
