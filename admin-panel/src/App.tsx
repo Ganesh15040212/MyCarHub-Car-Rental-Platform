@@ -17,7 +17,9 @@ import {
   AlertTriangle,
   RefreshCw,
   Users,
-  Menu
+  Menu,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 import { Toaster, toast } from 'sonner';
@@ -76,6 +78,10 @@ export default function App() {
   const [setupEmail, setSetupEmail] = useState('');
   const [setupPassword, setSetupPassword] = useState('');
   const [setupConfirmPassword, setSetupConfirmPassword] = useState('');
+  
+  const [showSetupPassword, setShowSetupPassword] = useState(false);
+  const [showSetupConfirmPassword, setShowSetupConfirmPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'cars' | 'bookings' | 'feedbacks'>('dashboard');
@@ -524,26 +530,44 @@ export default function App() {
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Choose Password</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={setupPassword}
-                    onChange={e => setSetupPassword(e.target.value)}
-                    className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type={showSetupPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={setupPassword}
+                      onChange={e => setSetupPassword(e.target.value)}
+                      className="w-full h-12 pl-4 pr-12 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSetupPassword(!showSetupPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer flex items-center justify-center"
+                    >
+                      {showSetupPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Confirm Password</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={setupConfirmPassword}
-                    onChange={e => setSetupConfirmPassword(e.target.value)}
-                    className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type={showSetupConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={setupConfirmPassword}
+                      onChange={e => setSetupConfirmPassword(e.target.value)}
+                      className="w-full h-12 pl-4 pr-12 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSetupConfirmPassword(!showSetupConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer flex items-center justify-center"
+                    >
+                      {showSetupConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -587,14 +611,23 @@ export default function App() {
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type={showLoginPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      className="w-full h-12 pl-4 pr-12 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer flex items-center justify-center"
+                    >
+                      {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -802,9 +835,9 @@ export default function App() {
             {/* Metric KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 flex justify-between items-start transition-all hover:shadow-lg">
-                <div className="flex-1 min-w-0 pr-4">
+                <div className="flex-1 pr-4">
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Gross Income</p>
-                  <h3 className="text-3xl font-black text-red-600 mt-2 truncate">₹{totalEarnings.toLocaleString('en-IN')}</h3>
+                  <h3 className="text-3xl font-black text-red-600 mt-2">₹{totalEarnings.toLocaleString('en-IN')}</h3>
                   <p className="text-[10px] text-gray-500 mt-2">Earned from {confirmedBookings.length} confirmed orders</p>
                 </div>
                 <div className="w-12 h-12 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-center shrink-0">
