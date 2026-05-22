@@ -6,6 +6,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Car, REQUIRED_DOCUMENTS } from '../types/car';
 import { toast } from 'sonner';
+import { API_URL } from '../config';
 import { DatePicker } from './ui/DatePicker';
 import { parse, isValid } from 'date-fns';
 
@@ -105,7 +106,7 @@ export default function BookingModal({ car, isOpen, onClose }: BookingModalProps
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const response = await fetch(`${API_URL}/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import CarCard from '../components/CarCard';
 import { fiveSeaterCars, sevenSeaterCars, allCars } from '../data/cars';
+import { API_URL } from '../config';
 
 export default function Cars() {
   const [cars, setCars] = useState<any[]>([]);
@@ -17,7 +18,7 @@ export default function Cars() {
   useEffect(() => {
     const fetchCars = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/cars');
+        const response = await fetch(`${API_URL}/cars`);
         if (response.ok) {
           const data = await response.json();
           setCars(data);

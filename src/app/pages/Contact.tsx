@@ -7,6 +7,7 @@ import { Textarea } from '../components/ui/textarea';
 import { COMPANY_INFO, REQUIRED_DOCUMENTS } from '../types/car';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { API_URL } from '../config';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -49,7 +50,7 @@ export default function Contact() {
 
     const toastId = toast.loading('Sending message...');
     try {
-      const response = await fetch('http://localhost:5000/api/feedbacks', {
+      const response = await fetch(`${API_URL}/feedbacks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
