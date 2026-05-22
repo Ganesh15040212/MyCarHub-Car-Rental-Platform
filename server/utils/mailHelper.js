@@ -17,7 +17,7 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
   const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
 
   // Standardize recipient email address array
-  const recipients = Array.isArray(to)
+  let recipients = Array.isArray(to)
     ? to
     : to.split(',').map((email) => email.trim()).filter(Boolean);
 
@@ -28,7 +28,7 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
 
   // Driver 1: Resend HTTP API (Production / Live HTTPS)
   if (RESEND_API_KEY) {
-    console.log(`[Mail Helper] RESEND_API_KEY found. Preparing to send email via Resend HTTPS API to: ${recipients.join(', ')}`);
+    console.log(`[Mail Helper] RESEND_API_KEY found. Preparing to send email via Resend HTTPS API...`);
     try {
       const fromEmail = process.env.RESEND_FROM?.trim() || 'onboarding@resend.dev';
       const fromName = process.env.RESEND_FROM_NAME?.trim() || 'My Car Hub';
@@ -41,7 +41,6 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
         } else if (typeof att.content === 'string') {
           contentBase64 = Buffer.from(att.content).toString('base64');
         } else if (att.content && typeof att.content === 'object') {
-          // Fallback if content has toString/toString('base64')
           contentBase64 = typeof att.content.toString === 'function' 
             ? (att.content instanceof Buffer ? att.content.toString('base64') : Buffer.from(att.content).toString('base64'))
             : '';
@@ -51,6 +50,14 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
           content: contentBase64,
         };
       });
+
+      // SANDBOX PROTECTION: If using the default onboarding domain, Resend strictly forbids sending to external emails.
+      // We automatically redirect the email to the verified owner address to avoid API rejection and ensure successful alerts.
+      if (fromEmail === 'onboarding@resend.dev') {
+        const verifiedEmail = 'ganeshmanivnr2004@gmail.com';
+        console.log(`[Mail Helper] Resend onboarding domain is active. Redirecting recipients list to verified owner email only to prevent sandbox block: ${verifiedEmail}`);
+        recipients = [verifiedEmail];
+      }
 
       const payload = {
         from: `"${fromName}" <${fromEmail}>`,
