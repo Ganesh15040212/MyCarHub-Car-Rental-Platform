@@ -17,10 +17,14 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
   const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
   const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
 
-  // Standardize recipient email address array
-  const recipients = Array.isArray(to)
-    ? to
-    : to.split(',').map((email) => email.trim()).filter(Boolean);
+  // Standardize recipient email address array and deduplicate to prevent SendGrid API duplicate email errors
+  const recipients = Array.from(
+    new Set(
+      (Array.isArray(to) ? to : to.split(','))
+        .map((email) => email?.trim())
+        .filter(Boolean)
+    )
+  );
 
   if (recipients.length === 0) {
     console.warn('[Mail Helper] No recipients defined. Skipping email sending.');
