@@ -7,7 +7,6 @@ import {
   Plus, 
   Edit2, 
   Trash2, 
-  Power, 
   Check, 
   X, 
   Lock, 
@@ -16,7 +15,6 @@ import {
   Database, 
   AlertTriangle,
   RefreshCw,
-  Users,
   Menu,
   Eye,
   EyeOff
@@ -47,6 +45,7 @@ interface IBooking {
   carName: string;
   customerName: string;
   phone: string;
+  email?: string;
   pickupDate: string;
   pickupTime: string;
   dropDate: string;

@@ -6,6 +6,21 @@ import PDFDocument from 'pdfkit';
 
 const router = express.Router();
 
+const createSMTPTransporter = () => {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER?.trim() || '',
+      pass: process.env.EMAIL_PASS?.trim() || '',
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
+};
+
 // Helper to configure email transporter
 const sendBookingEmail = async (bookingData) => {
   const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
@@ -17,13 +32,7 @@ const sendBookingEmail = async (bookingData) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail', // or customize based on environment
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS,
-      },
-    });
+    const transporter = createSMTPTransporter();
 
     const toEmails = [OWNER_EMAIL || 'info@mycarhub.com', bookingData.email];
 
@@ -244,13 +253,7 @@ const sendConfirmationEmail = async (bookingData) => {
     // Generate PDF receipt buffer
     const pdfBuffer = await generateReceiptPDF(bookingData, car);
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS,
-      },
-    });
+    const transporter = createSMTPTransporter();
 
     const toEmails = [bookingData.email, OWNER_EMAIL || 'info@mycarhub.com'];
 
@@ -343,13 +346,7 @@ const sendCancellationEmail = async (bookingData) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS,
-      },
-    });
+    const transporter = createSMTPTransporter();
 
     const toEmails = [bookingData.email, OWNER_EMAIL || 'info@mycarhub.com'];
 
@@ -416,13 +413,7 @@ const sendCompletionEmail = async (bookingData) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS,
-      },
-    });
+    const transporter = createSMTPTransporter();
 
     const toEmails = [bookingData.email, OWNER_EMAIL || 'info@mycarhub.com'];
 
