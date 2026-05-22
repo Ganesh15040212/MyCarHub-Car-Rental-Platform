@@ -2,8 +2,7 @@ import nodemailer from 'nodemailer';
 
 /**
  * Universal email sender helper.
- * Uses Resend API via secure HTTPS if RESEND_API_KEY is defined in the environment.
- * Otherwise, falls back to local Nodemailer SMTP transport.
+ * Supports Brevo HTTP API, Resend HTTP API, and local Nodemailer SMTP fallback.
  * 
  * @param {Object} options
  * @param {string|string[]} options.to - Recipient email(s)
@@ -12,6 +11,7 @@ import nodemailer from 'nodemailer';
  * @param {Array<{filename: string, content: Buffer|string}>} [options.attachments] - Optional email attachments
  */
 export const sendMailHelper = async ({ to, subject, html, attachments = [] }) => {
+  const BREVO_API_KEY = process.env.BREVO_API_KEY?.trim();
   const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim();
   const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
   const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
@@ -26,7 +26,67 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
     return;
   }
 
-  // Driver 1: Resend HTTP API (Production / Live HTTPS)
+  // ==========================================
+  // Driver 1: Brevo HTTP API (Allows sending to anyone without custom domain)
+  // ==========================================
+  if (BREVO_API_KEY) {
+    console.log(`[Mail Helper] BREVO_API_KEY found. Sending email via Brevo HTTPS API to: ${recipients.join(', ')}`);
+    try {
+      const senderEmail = process.env.BREVO_SENDER?.trim() || EMAIL_USER || 'ganeshmanivnr2004@gmail.com';
+      const senderName = process.env.BREVO_SENDER_NAME?.trim() || 'My Car Hub';
+
+      // Map attachments for Brevo (name and base64 content)
+      const brevoAttachments = attachments.map((att) => {
+        let contentBase64 = '';
+        if (Buffer.isBuffer(att.content)) {
+          contentBase64 = att.content.toString('base64');
+        } else if (typeof att.content === 'string') {
+          contentBase64 = Buffer.from(att.content).toString('base64');
+        } else if (att.content && typeof att.content === 'object') {
+          contentBase64 = typeof att.content.toString === 'function' 
+            ? (att.content instanceof Buffer ? att.content.toString('base64') : Buffer.from(att.content).toString('base64'))
+            : '';
+        }
+        return {
+          name: att.filename,
+          content: contentBase64,
+        };
+      });
+
+      const payload = {
+        sender: { name: senderName, email: senderEmail },
+        to: recipients.map(email => ({ email })),
+        subject,
+        htmlContent: html,
+        attachment: brevoAttachments.length > 0 ? brevoAttachments : undefined,
+      };
+
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': BREVO_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.message || `HTTP error! Status: ${response.status}`);
+      }
+
+      console.log(`[Mail Helper] Brevo HTTPS API email sent successfully! MessageId: ${responseData.messageId || 'Success'}`);
+      return responseData;
+    } catch (error) {
+      console.error('[Mail Helper] Error sending email via Brevo HTTPS API:', error);
+      throw error;
+    }
+  }
+
+  // ==========================================
+  // Driver 2: Resend HTTP API (Sandbox Onboarding / Custom Domain HTTPS)
+  // ==========================================
   if (RESEND_API_KEY) {
     console.log(`[Mail Helper] RESEND_API_KEY found. Preparing to send email via Resend HTTPS API...`);
     try {
@@ -90,8 +150,10 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
     }
   }
 
-  // Driver 2: Nodemailer SMTP (Local / Development fallback)
-  console.log(`[Mail Helper] RESEND_API_KEY not found. Falling back to Nodemailer SMTP...`);
+  // ==========================================
+  // Driver 3: Nodemailer SMTP (Local / Development fallback)
+  // ==========================================
+  console.log(`[Mail Helper] No API keys found. Falling back to Nodemailer SMTP...`);
   if (!EMAIL_USER || !EMAIL_PASS) {
     console.warn('[Mail Helper] Nodemailer SMTP fallback skipped: EMAIL_USER or EMAIL_PASS is missing in environment variables.');
     return;
