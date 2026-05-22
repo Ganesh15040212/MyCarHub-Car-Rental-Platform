@@ -1,35 +1,15 @@
 import express from 'express';
 import Feedback from '../models/Feedback.js';
-import nodemailer from 'nodemailer';
+import { sendMailHelper } from '../utils/mailHelper.js';
 
 const router = express.Router();
 
 // Helper to send contact message email alert
 const sendFeedbackEmail = async (feedbackData) => {
-  const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
-  const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
 
-  if (!EMAIL_USER || !EMAIL_PASS) {
-    return;
-  }
-
   try {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-
-    const mailOptions = {
-      from: `"My Car Hub Portal" <${EMAIL_USER}>`,
+    await sendMailHelper({
       to: OWNER_EMAIL || 'info@mycarhub.com',
       subject: `✉️ New Contact Message from ${feedbackData.name}`,
       html: `
@@ -69,14 +49,13 @@ const sendFeedbackEmail = async (feedbackData) => {
             This email was sent from the My Car Hub Platform Contact page form.
           </div>
         </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
+      `
+    });
   } catch (error) {
     // Quiet error handling
   }
 };
+
 
 // GET all feedbacks (Sorted latest first)
 router.get('/', async (req, res) => {
