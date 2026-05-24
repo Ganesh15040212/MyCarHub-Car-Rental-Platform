@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, Clock, User, MessageSquare, Send } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, User, MessageSquare, Send, Navigation, Map } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -9,7 +9,43 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { API_URL } from '../config';
 
+const CAR_HUBS = [
+  {
+    id: 'chennai',
+    name: 'Chennai Central Airport Hub',
+    address: 'GST Road, Meenambakkam, Chennai, Tamil Nadu 600027',
+    coords: 'Chennai Airport, Tamil Nadu, India',
+    phone: '+91 9597693716',
+    hours: '24 Hours Support'
+  },
+  {
+    id: 'coimbatore',
+    name: 'Coimbatore Airport Hub',
+    address: 'Avinashi Road, Peelamedu, Coimbatore, Tamil Nadu 641014',
+    coords: 'Coimbatore Airport, Tamil Nadu, India',
+    phone: '+91 9597693716',
+    hours: '8:00 AM - 10:00 PM'
+  },
+  {
+    id: 'madurai',
+    name: 'Madurai Junction Railway Station Hub',
+    address: 'Railway Station Rd, Madurai, Tamil Nadu 625001',
+    coords: 'Madurai Railway Station, Tamil Nadu, India',
+    phone: '+91 9597693716',
+    hours: '8:00 AM - 10:00 PM'
+  },
+  {
+    id: 'salem',
+    name: 'Salem Central Bus Terminal Hub',
+    address: 'Central Bus Stand Rd, Salem, Tamil Nadu 636009',
+    coords: 'Salem Bus Stand, Tamil Nadu, India',
+    phone: '+91 9597693716',
+    hours: '8:00 AM - 9:00 PM'
+  }
+];
+
 export default function Contact() {
+  const [selectedHub, setSelectedHub] = useState(CAR_HUBS[0]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -285,19 +321,98 @@ export default function Contact() {
           </div>
         </div>
 
-        {/* Map Section (Placeholder) */}
-        <div className="mt-12">
-          <Card>
-            <CardContent className="p-0">
-              <div className="w-full h-96 bg-gray-200 rounded-lg overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1200"
-                  alt="Location"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Interactive Google Maps and Hub Locations Section */}
+        <div className="mt-16 border-t pt-12">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold flex items-center justify-center gap-2 mb-3">
+              <Map className="w-8 h-8 text-red-600 animate-pulse" />
+              Our Car Delivery & Pickup Hubs
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Select one of our premium hubs below to view its precise location on the map, zoom in/out to check delivery zones, and get direct navigation directions.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {/* Hub Selector Cards Column */}
+            <div className="lg:col-span-5 space-y-4 flex flex-col justify-start">
+              {CAR_HUBS.map((hub) => {
+                const isSelected = selectedHub.id === hub.id;
+                return (
+                  <div
+                    key={hub.id}
+                    onClick={() => setSelectedHub(hub)}
+                    className={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md ${
+                      isSelected
+                        ? 'border-red-600 bg-red-50/40 shadow-lg shadow-red-50/80 ring-2 ring-red-600/20'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl ${isSelected ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className={`font-bold text-base transition-colors ${isSelected ? 'text-red-700' : 'text-gray-900'}`}>
+                            {hub.name}
+                          </h4>
+                          {isSelected && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 animate-pulse">
+                              Active Focus
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 leading-relaxed">{hub.address}</p>
+                        <div className="pt-2 flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 mt-2">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-gray-400" />
+                            {hub.hours}
+                          </span>
+                          <span className="flex items-center gap-1 font-semibold text-gray-700">
+                            <Phone className="w-3.5 h-3.5 text-gray-400" />
+                            {hub.phone}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Live Google Map Iframe Column */}
+            <div className="lg:col-span-7 flex flex-col">
+              <Card className="overflow-hidden flex-1 border-2 border-gray-100 shadow-xl rounded-2xl flex flex-col">
+                <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Live Interactive Map</span>
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedHub.coords)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 transition-colors"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    Get Directions
+                  </a>
+                </div>
+                <CardContent className="p-0 relative flex-1 min-h-[450px] bg-gray-100">
+                  <iframe
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedHub.coords)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                    width="100%"
+                    height="100%"
+                    className="absolute inset-0 border-0 rounded-b-2xl shadow-inner"
+                    allowFullScreen
+                    loading="lazy"
+                    title={selectedHub.name}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
