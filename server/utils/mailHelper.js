@@ -11,7 +11,7 @@ import nodemailer from 'nodemailer';
  * @param {string} options.html - Email HTML content
  * @param {Array<{filename: string, content: Buffer|string}>} [options.attachments] - Optional email attachments
  */
-export const sendMailHelper = async ({ to, subject, html, attachments = [] }) => {
+export const sendMailHelper = async ({ to, replyTo, subject, html, attachments = [] }) => {
   const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY?.trim();
   const SENDGRID_FROM = process.env.SENDGRID_FROM?.trim() || 'guestguest615242004@gmail.com';
   const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
@@ -83,6 +83,7 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
           email: SENDGRID_FROM,
           name: fromName,
         },
+        reply_to: replyTo ? { email: replyTo } : undefined,
         subject,
         content: [
           {
@@ -155,6 +156,7 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
     const mailOptions = {
       from: `"My Car Hub Bookings" <${EMAIL_USER}>`,
       to: recipients.join(', '),
+      replyTo,
       subject,
       html,
       attachments: attachments.map((att) => ({

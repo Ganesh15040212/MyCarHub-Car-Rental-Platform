@@ -11,10 +11,11 @@ const sendBookingEmail = async (bookingData) => {
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
 
   try {
-    const toEmails = [OWNER_EMAIL || 'guestguest615242004@gmail.com', bookingData.email];
+    const ownerEmail = OWNER_EMAIL || 'guestguest615242004@gmail.com';
 
     await sendMailHelper({
-      to: toEmails,
+      to: ownerEmail,
+      replyTo: bookingData.email,
       subject: `🚗 New Car Booking Alert - ID: ${bookingData.bookingId}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
