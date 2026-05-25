@@ -13,7 +13,7 @@ import nodemailer from 'nodemailer';
  */
 export const sendMailHelper = async ({ to, replyTo, subject, html, attachments = [] }) => {
   const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY?.trim();
-  const SENDGRID_FROM = process.env.SENDGRID_FROM?.trim() || 'guestguest615242004@gmail.com';
+  const SENDGRID_FROM = process.env.SENDGRID_FROM?.trim() || 'ganeshmanivnr2004@gmail.com';
   const EMAIL_USER = process.env.EMAIL_USER?.trim() || '';
   const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
 
