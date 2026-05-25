@@ -18,13 +18,13 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
   const EMAIL_PASS = process.env.EMAIL_PASS?.trim() || '';
 
   // Standardize recipient email address array and deduplicate to prevent SendGrid API duplicate email errors
-  // Automatically redirect dead placeholder 'info@mycarhub.com' and old email 'ganeshmanivnr2004@gmail.com' to verified owner email 'guestguest615242004@gmail.com'
+  // Automatically redirect dead placeholder '@mycarhub.com' domains and old email 'ganeshmanivnr2004@gmail.com' to verified owner email 'guestguest615242004@gmail.com'
   const recipients = Array.from(
     new Set(
       (Array.isArray(to) ? to : to.split(','))
         .map((email) => {
           const clean = email?.trim();
-          if (clean === 'info@mycarhub.com' || clean === 'ganeshmanivnr2004@gmail.com') {
+          if (clean?.endsWith('@mycarhub.com') || clean === 'ganeshmanivnr2004@gmail.com') {
             return 'guestguest615242004@gmail.com';
           }
           return clean;
