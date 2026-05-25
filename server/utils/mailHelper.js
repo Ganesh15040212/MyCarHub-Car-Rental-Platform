@@ -72,57 +72,62 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
         };
       });
 
-      const payload = {
-        personalizations: [
-          {
-            to: recipients.map((email) => ({ email })),
+      // Loop through recipients to send individual personalized emails
+      // This protects recipient privacy, ensures separate delivery, and prevents DMARC block propagation.
+      const sendPromises = recipients.map(async (recipientEmail) => {
+        const payload = {
+          personalizations: [
+            {
+              to: [{ email: recipientEmail }],
+            },
+          ],
+          from: {
+            email: SENDGRID_FROM,
+            name: fromName,
           },
-        ],
-        from: {
-          email: SENDGRID_FROM,
-          name: fromName,
-        },
-        subject,
-        content: [
-          {
-            type: 'text/html',
-            value: html,
-          },
-        ],
-        attachments: sendGridAttachments.length > 0 ? sendGridAttachments : undefined,
-      };
+          subject,
+          content: [
+            {
+              type: 'text/html',
+              value: html,
+            },
+          ],
+          attachments: sendGridAttachments.length > 0 ? sendGridAttachments : undefined,
+        };
 
-      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          // If SendGrid returns an error, retrieve the error details
+          let errorMessage = `HTTP error! Status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            if (errorData && errorData.errors) {
+              errorMessage = errorData.errors.map(err => `${err.message} (${err.field || 'no field'})`).join(', ');
+            } else if (errorData && errorData.message) {
+              errorMessage = errorData.message;
+            }
+          } catch (e) {
+            try {
+              const rawText = await response.text();
+              errorMessage = rawText || errorMessage;
+            } catch (textErr) {
+              // Quiet fallback
+            }
+          }
+          throw new Error(`Failed to send to ${recipientEmail}: ${errorMessage}`);
+        }
       });
 
-      if (!response.ok) {
-        // If SendGrid returns an error, retrieve the error details
-        let errorMessage = `HTTP error! Status: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          if (errorData && errorData.errors) {
-            errorMessage = errorData.errors.map(err => `${err.message} (${err.field || 'no field'})`).join(', ');
-          } else if (errorData && errorData.message) {
-            errorMessage = errorData.message;
-          }
-        } catch (e) {
-          try {
-            const rawText = await response.text();
-            errorMessage = rawText || errorMessage;
-          } catch (textErr) {
-            // Quiet fallback
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      console.log(`[Mail Helper] SendGrid HTTPS API email sent successfully to: ${recipients.join(', ')}`);
+      await Promise.all(sendPromises);
+      console.log(`[Mail Helper] SendGrid HTTPS API email sent successfully to all recipients individually: ${recipients.join(', ')}`);
       return { success: true };
     } catch (error) {
       console.error('[Mail Helper] Error sending email via SendGrid HTTPS API:', error);
