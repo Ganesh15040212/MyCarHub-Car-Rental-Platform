@@ -195,7 +195,7 @@ const generateReceiptPDF = (bookingData, car = null) => {
       
       doc.fillColor('#999999').fontSize(9).font('Helvetica');
       doc.text('Thank you for choosing My Car Hub!', 50, footerY + 15, { align: 'center', width: 495 });
-      doc.text('For queries, contact support at info@mycarhub.com or call +91 9597693716', 50, footerY + 30, { align: 'center', width: 495 });
+      doc.text('For queries, contact support at ganeshmanivnr2004@gmail.com or call +91 9597693716', 50, footerY + 30, { align: 'center', width: 495 });
       doc.text('This is a computer-generated confirmation receipt and does not require a physical signature.', 50, footerY + 45, { align: 'center', width: 495 });
       
       doc.end();
