@@ -10,7 +10,7 @@ const sendFeedbackEmail = async (feedbackData) => {
 
   try {
     await sendMailHelper({
-      to: OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com',
+      to: OWNER_EMAIL || 'guestguest615242004@gmail.com',
       subject: `✉️ New Contact Message from ${feedbackData.name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">

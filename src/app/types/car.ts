@@ -31,7 +31,7 @@ export const COMPANY_INFO = {
   name: "My Car Hub",
   phone: "9597693716",
   owner: "M Kanthaswamy",
-  email: "ganeshmanivnr2004@gmail.com",
+  email: "guestguest615242004@gmail.com",
   address: "Tamil Nadu, India"
 };
 
