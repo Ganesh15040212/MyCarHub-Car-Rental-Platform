@@ -76,11 +76,9 @@ export const sendMailHelper = async ({ to, subject, html, attachments = [] }) =>
       });
 
       const payload = {
-        personalizations: [
-          {
-            to: recipients.map((email) => ({ email })),
-          },
-        ],
+        personalizations: recipients.map((email) => ({
+          to: [{ email }],
+        })),
         from: {
           email: SENDGRID_FROM,
           name: fromName,
