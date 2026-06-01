@@ -105,6 +105,8 @@ export default function App() {
     images: Array(10).fill(''),
     available: true
   });
+  
+  const [imageModes, setImageModes] = useState<Record<string, 'url' | 'upload'>>({});
 
   // Verify auth session on mount
   useEffect(() => {
@@ -350,8 +352,56 @@ export default function App() {
     resetCarFormData();
   };
 
+  const handleImageUpload = (file: File, callback: (base64: string) => void) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 600;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+          callback(compressedBase64);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleEditCarClick = (car: ICar) => {
     setEditingCar(car);
+    
+    // Set initial image input modes dynamically based on existing value types
+    const initialModes: Record<string, 'url' | 'upload'> = {};
+    initialModes['main'] = (car.image && car.image.startsWith('data:image/')) ? 'upload' : 'url';
+    if (car.images) {
+      car.images.forEach((img, idx) => {
+        initialModes[`gallery-${idx}`] = (img && img.startsWith('data:image/')) ? 'upload' : 'url';
+      });
+    }
+    setImageModes(initialModes);
+
     setCarFormData({
       id: car.id,
       name: car.name,
@@ -429,6 +479,7 @@ export default function App() {
       images: Array(10).fill(''),
       available: true
     });
+    setImageModes({});
   };
 
   // Booking status changes
@@ -1095,36 +1146,190 @@ export default function App() {
                       </div>
 
                       <div className="sm:col-span-2 space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Vehicle Image Web Link *</label>
-                        <input
-                          type="url"
-                          value={carFormData.image}
-                          onChange={e => setCarFormData(prev => ({ ...prev, image: e.target.value }))}
-                          placeholder="https://example.com/car-photo.png"
-                          className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
-                          required
-                        />
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Vehicle Main Image *</label>
+                          <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
+                            <button
+                              type="button"
+                              onClick={() => setImageModes(prev => ({ ...prev, main: 'upload' }))}
+                              className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                                (imageModes['main'] || 'upload') === 'upload'
+                                  ? 'bg-white text-red-600 shadow-sm'
+                                  : 'text-gray-500 hover:text-gray-800'
+                              }`}
+                            >
+                              Upload File
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setImageModes(prev => ({ ...prev, main: 'url' }))}
+                              className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                                (imageModes['main'] || 'upload') === 'url'
+                                  ? 'bg-white text-red-600 shadow-sm'
+                                  : 'text-gray-500 hover:text-gray-800'
+                              }`}
+                            >
+                              Web Link
+                            </button>
+                          </div>
+                        </div>
+
+                        {(imageModes['main'] || 'upload') === 'upload' ? (
+                          <div className="flex gap-4 items-center">
+                            <label className="flex-1 flex flex-col items-center justify-center h-12 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-500 hover:bg-red-50/20 cursor-pointer transition-all">
+                              <span className="text-xs font-semibold text-gray-600 truncate px-4">
+                                {carFormData.image ? (carFormData.image.startsWith('data:image/') ? "✓ Main Image Selected (Base64)" : "✓ URL Selected") : "Choose Main Image File..."}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    handleImageUpload(e.target.files[0], (base64) => {
+                                      setCarFormData(prev => ({ ...prev, image: base64 }));
+                                    });
+                                  }
+                                }}
+                              />
+                            </label>
+                            {carFormData.image && (
+                              <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50">
+                                <img src={carFormData.image} alt="Preview" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <input
+                            type="url"
+                            value={carFormData.image}
+                            onChange={e => setCarFormData(prev => ({ ...prev, image: e.target.value }))}
+                            placeholder="https://example.com/car-photo.png"
+                            className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
+                            required
+                          />
+                        )}
                       </div>
 
                       <div className="sm:col-span-2 border-t border-gray-200 pt-4 mt-2">
                         <h4 className="text-sm font-bold text-gray-800 mb-4">Additional Gallery Images (10 Detailed Views)</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {Array(10).fill(0).map((_, idx) => (
-                            <div key={idx} className="space-y-1">
-                              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Gallery Image {idx + 1}</label>
-                              <input
-                                type="url"
-                                value={carFormData.images[idx] || ''}
-                                onChange={e => {
-                                  const newImages = [...carFormData.images];
-                                  newImages[idx] = e.target.value;
-                                  setCarFormData(prev => ({ ...prev, images: newImages }));
-                                }}
-                                placeholder={`https://example.com/view-${idx + 1}.png`}
-                                className="w-full h-10 px-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-xs transition-all text-gray-900"
-                              />
-                            </div>
-                          ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          {Array(10).fill(0).map((_, idx) => {
+                            const mode = imageModes[`gallery-${idx}`] || 'upload';
+                            const imageUrl = carFormData.images[idx] || '';
+                            const isUploaded = imageUrl.startsWith('data:image/');
+
+                            return (
+                              <div key={idx} className="bg-slate-50/50 p-4 rounded-2xl border border-gray-200/60 space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                    Gallery Image {idx + 1}
+                                  </label>
+                                  <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => setImageModes(prev => ({ ...prev, [`gallery-${idx}`]: 'upload' }))}
+                                      className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all cursor-pointer ${
+                                        mode === 'upload'
+                                          ? 'bg-white text-red-600 shadow-sm'
+                                          : 'text-gray-500 hover:text-gray-800'
+                                      }`}
+                                    >
+                                      Upload File
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setImageModes(prev => ({ ...prev, [`gallery-${idx}`]: 'url' }))}
+                                      className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all cursor-pointer ${
+                                        mode === 'url'
+                                          ? 'bg-white text-red-600 shadow-sm'
+                                          : 'text-gray-500 hover:text-gray-800'
+                                      }`}
+                                    >
+                                      Web Link
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {mode === 'upload' ? (
+                                  <div className="flex gap-3 items-center">
+                                    <label className="flex-1 flex flex-col items-center justify-center h-10 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-500 hover:bg-red-50/20 cursor-pointer transition-all">
+                                      <span className="text-[11px] font-semibold text-gray-600 truncate px-3">
+                                        {imageUrl ? (isUploaded ? "✓ Image Uploaded" : "✓ URL Selected") : "Choose Photo File..."}
+                                      </span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={e => {
+                                          if (e.target.files && e.target.files[0]) {
+                                            handleImageUpload(e.target.files[0], (base64) => {
+                                              const newImages = [...carFormData.images];
+                                              newImages[idx] = base64;
+                                              setCarFormData(prev => ({ ...prev, images: newImages }));
+                                            });
+                                          }
+                                        }}
+                                      />
+                                    </label>
+                                    {imageUrl && (
+                                      <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
+                                        <img src={imageUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const newImages = [...carFormData.images];
+                                            newImages[idx] = '';
+                                            setCarFormData(prev => ({ ...prev, images: newImages }));
+                                          }}
+                                          className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="flex gap-3 items-center">
+                                    <input
+                                      type="url"
+                                      value={imageUrl}
+                                      onChange={e => {
+                                        const newImages = [...carFormData.images];
+                                        newImages[idx] = e.target.value;
+                                        setCarFormData(prev => ({ ...prev, images: newImages }));
+                                      }}
+                                      placeholder={`https://example.com/view-${idx + 1}.png`}
+                                      className="flex-1 h-10 px-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-xs transition-all text-gray-900"
+                                    />
+                                    {imageUrl && (
+                                      <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
+                                        <img 
+                                          src={imageUrl} 
+                                          alt={`Gallery ${idx + 1}`} 
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100x100/ffffff/d4183d?text=Error';
+                                          }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const newImages = [...carFormData.images];
+                                            newImages[idx] = '';
+                                            setCarFormData(prev => ({ ...prev, images: newImages }));
+                                          }}
+                                          className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
