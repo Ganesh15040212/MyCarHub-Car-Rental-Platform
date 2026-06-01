@@ -59,6 +59,15 @@ const seedDatabase = async () => {
       console.log(`Database already seeded with ${carCount} cars. Skipping seeding.`);
     }
 
+    // 3. Clear default Unsplash gallery URLs from all existing cars in MongoDB to resolve pre-seeded lists
+    const cleanRes = await Car.updateMany(
+      { images: { $elemMatch: { $regex: /unsplash\.com/ } } },
+      { $set: { images: [] } }
+    );
+    if (cleanRes.modifiedCount > 0) {
+      console.log(`🧹 Successfully cleaned up default Unsplash gallery images for ${cleanRes.modifiedCount} cars in MongoDB!`);
+    }
+
     // 2. Seed default admin
     const adminCount = await Admin.countDocuments();
     if (adminCount === 0) {

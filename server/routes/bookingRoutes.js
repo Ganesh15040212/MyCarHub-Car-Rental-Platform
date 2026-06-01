@@ -420,7 +420,7 @@ const sendCorrectionEmail = async (bookingData, oldStatus, newStatus) => {
 
     await sendMailHelper({
       to: toEmails,
-      subject: `⚠️ Booking Status Updated - ID: ${bookingData.bookingId}`,
+      subject: `Correction: Booking Reservation Update - ID: ${bookingData.bookingId}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
           <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
@@ -556,17 +556,18 @@ router.put('/:id', async (req, res) => {
       booking.status = newStatus;
       const updatedBooking = await booking.save();
 
-      // Trigger correction email if transitioned backward (mistake correction)
+      // Trigger correction email if transitioned backward or restored from mistaken Cancellation
       const isRevertedBackward = 
         (oldStatus === 'Completed' && (newStatus === 'Confirmed' || newStatus === 'Pending')) ||
-        (oldStatus === 'Confirmed' && newStatus === 'Pending');
+        (oldStatus === 'Confirmed' && newStatus === 'Pending') ||
+        (oldStatus === 'Cancelled' && (newStatus === 'Confirmed' || newStatus === 'Pending'));
 
       if (isRevertedBackward) {
         sendCorrectionEmail(updatedBooking, oldStatus, newStatus);
       }
 
-      // Trigger booking confirmation email with PDF summary if transitioned to Confirmed
-      if (newStatus === 'Confirmed' && oldStatus !== 'Confirmed') {
+      // Trigger booking confirmation email with PDF summary strictly if moving forward from Pending to Confirmed
+      if (newStatus === 'Confirmed' && oldStatus === 'Pending') {
         sendConfirmationEmail(updatedBooking);
 
         // Auto-mark the car as booked and record the drop date as availability date
