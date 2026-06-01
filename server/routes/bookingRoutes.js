@@ -6,6 +6,57 @@ import { sendMailHelper } from '../utils/mailHelper.js';
 
 const router = express.Router();
 
+// Helper to dynamically calculate and update car availability based on active confirmed or pending bookings
+const updateCarAvailability = async (carId) => {
+  if (!carId) return;
+  try {
+    const parseDateStr = (dateStr) => {
+      if (!dateStr) return new Date(0);
+      if (dateStr.includes('/')) {
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      return new Date(dateStr);
+    };
+
+    // Find all active confirmed or pending bookings for this car
+    const activeBookings = await Booking.find({ 
+      carId, 
+      status: { $in: ['Confirmed', 'Pending'] } 
+    });
+
+    if (activeBookings.length > 0) {
+      // Find the booking with the latest drop date
+      let latestBooking = activeBookings[0];
+      let latestDate = parseDateStr(latestBooking.dropDate);
+
+      for (let i = 1; i < activeBookings.length; i++) {
+        const currentDate = parseDateStr(activeBookings[i].dropDate);
+        if (currentDate > latestDate) {
+          latestDate = currentDate;
+          latestBooking = activeBookings[i];
+        }
+      }
+
+      // Update car to be booked with the latest drop date
+      await Car.findOneAndUpdate(
+        { id: carId },
+        { isBooked: true, availableFrom: latestBooking.dropDate }
+      );
+      console.log(`[Car Availability] Car ${carId} marked as booked. Available from ${latestBooking.dropDate} (based on ${activeBookings.length} active bookings).`);
+    } else {
+      // No active confirmed or pending bookings, make the car completely available
+      await Car.findOneAndUpdate(
+        { id: carId },
+        { isBooked: false, availableFrom: '' }
+      );
+      console.log(`[Car Availability] Car ${carId} marked as completely available (0 active bookings).`);
+    }
+  } catch (error) {
+    console.error(`[Car Availability] Error updating availability for car ${carId}:`, error);
+  }
+};
+
 // Helper to configure email transporter
 const sendBookingEmail = async (bookingData) => {
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
@@ -523,6 +574,9 @@ router.post('/', async (req, res) => {
     // Trigger email alert asynchronously and await its complete sending
     await sendBookingEmail(createdBooking);
 
+    // Sync car availability state in database
+    await updateCarAvailability(createdBooking.carId);
+
     res.status(201).json(createdBooking);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -559,16 +613,6 @@ router.put('/:id', async (req, res) => {
       // Send Confirmation email if transitioned to Confirmed
       if (newStatus === 'Confirmed' && oldStatus !== 'Confirmed') {
         await sendConfirmationEmail(updatedBooking);
-
-        // Auto-mark the car as booked and record the drop date as availability date
-        try {
-          await Car.findOneAndUpdate(
-            { id: updatedBooking.carId },
-            { isBooked: true, availableFrom: updatedBooking.dropDate }
-          );
-        } catch (carErr) {
-          // Quiet error handling
-        }
       }
 
       // Send Cancellation email if transitioned to Cancelled
@@ -581,17 +625,8 @@ router.put('/:id', async (req, res) => {
         await sendCompletionEmail(updatedBooking);
       }
 
-      // Revert car availability when booking is Cancelled, Completed, or Pending from Confirmed
-      if ((newStatus === 'Cancelled' || newStatus === 'Completed' || newStatus === 'Pending') && oldStatus === 'Confirmed') {
-        try {
-          await Car.findOneAndUpdate(
-            { id: updatedBooking.carId },
-            { isBooked: false, availableFrom: '' }
-          );
-        } catch (carErr) {
-          // Quiet error handling
-        }
-      }
+      // Dynamically recalculate and update car availability based on all remaining active confirmed bookings
+      await updateCarAvailability(updatedBooking.carId);
 
       res.json(updatedBooking);
     } else {
