@@ -520,8 +520,8 @@ router.post('/', async (req, res) => {
 
     const createdBooking = await booking.save();
 
-    // Trigger email alert asynchronously
-    sendBookingEmail(createdBooking);
+    // Trigger email alert asynchronously and await its complete sending
+    await sendBookingEmail(createdBooking);
 
     res.status(201).json(createdBooking);
   } catch (error) {
@@ -548,12 +548,17 @@ router.put('/:id', async (req, res) => {
         (oldStatus === 'Cancelled' && (newStatus === 'Confirmed' || newStatus === 'Pending'));
 
       if (isRevertedBackward) {
-        sendCorrectionEmail(updatedBooking, oldStatus, newStatus);
+        await sendCorrectionEmail(updatedBooking, oldStatus, newStatus);
       }
 
-      // Trigger booking confirmation email with PDF summary strictly if moving forward from Pending to Confirmed
-      if (newStatus === 'Confirmed' && oldStatus === 'Pending') {
-        sendConfirmationEmail(updatedBooking);
+      // Send Pending email if transitioned to Pending
+      if (newStatus === 'Pending' && oldStatus !== 'Pending') {
+        await sendBookingEmail(updatedBooking);
+      }
+
+      // Send Confirmation email if transitioned to Confirmed
+      if (newStatus === 'Confirmed' && oldStatus !== 'Confirmed') {
+        await sendConfirmationEmail(updatedBooking);
 
         // Auto-mark the car as booked and record the drop date as availability date
         try {
@@ -568,16 +573,16 @@ router.put('/:id', async (req, res) => {
 
       // Send Cancellation email if transitioned to Cancelled
       if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
-        sendCancellationEmail(updatedBooking);
+        await sendCancellationEmail(updatedBooking);
       }
 
       // Send Completion email if transitioned to Completed
       if (newStatus === 'Completed' && oldStatus !== 'Completed') {
-        sendCompletionEmail(updatedBooking);
+        await sendCompletionEmail(updatedBooking);
       }
 
-      // Revert car availability when booking is Cancelled or Completed from Confirmed
-      if ((newStatus === 'Cancelled' || newStatus === 'Completed') && oldStatus === 'Confirmed') {
+      // Revert car availability when booking is Cancelled, Completed, or Pending from Confirmed
+      if ((newStatus === 'Cancelled' || newStatus === 'Completed' || newStatus === 'Pending') && oldStatus === 'Confirmed') {
         try {
           await Car.findOneAndUpdate(
             { id: updatedBooking.carId },
