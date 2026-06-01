@@ -81,6 +81,50 @@ const seedDatabase = async () => {
     } else {
       console.log('Admin account already exists in database. Skipping admin seeding.');
     }
+
+    // 3. Synchronize all cars' availability with active confirmed or pending bookings at server boot
+    console.log('🔄 Synchronizing all car availability states with active bookings...');
+    const allCars = await Car.find({});
+    
+    const parseDateStr = (dateStr) => {
+      if (!dateStr) return new Date(0);
+      if (dateStr.includes('/')) {
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      return new Date(dateStr);
+    };
+
+    for (const car of allCars) {
+      const activeBookings = await Booking.find({ 
+        carId: car.id, 
+        status: { $in: ['Confirmed', 'Pending'] } 
+      });
+
+      if (activeBookings.length > 0) {
+        let latestBooking = activeBookings[0];
+        let latestDate = parseDateStr(latestBooking.dropDate);
+
+        for (let i = 1; i < activeBookings.length; i++) {
+          const currentDate = parseDateStr(activeBookings[i].dropDate);
+          if (currentDate > latestDate) {
+            latestDate = currentDate;
+            latestBooking = activeBookings[i];
+          }
+        }
+
+        await Car.findOneAndUpdate(
+          { id: car.id },
+          { isBooked: true, availableFrom: latestBooking.dropDate }
+        );
+      } else {
+        await Car.findOneAndUpdate(
+          { id: car.id },
+          { isBooked: false, availableFrom: '' }
+        );
+      }
+    }
+    console.log('✅ Car availability synchronization complete!');
   } catch (error) {
     console.error(`Auto-seeding failed: ${error.message}`);
   }
