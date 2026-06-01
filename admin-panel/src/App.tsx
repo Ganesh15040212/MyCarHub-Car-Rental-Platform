@@ -704,27 +704,121 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen w-screen bg-slate-50 flex flex-col md:flex-row text-gray-900 overflow-hidden">
-      {/* MOBILE TOP BAR */}
-      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 md:hidden sticky top-0 z-20 shadow-sm">
+    <div className="min-h-screen w-screen bg-slate-50 flex flex-col text-gray-900 overflow-x-hidden">
+      {/* HEADER NAVIGATION (Combined Top Bar for Desktop and Mobile) */}
+      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 sticky top-0 z-30 shadow-xs">
+        {/* Brand Logo & Connection Status */}
         <div className="flex items-center gap-3">
           <div>
             <h2 className="text-lg font-black tracking-tight text-gray-900 leading-none">My Car Hub</h2>
-            <span className="text-[9px] text-red-600 font-bold uppercase tracking-wider">Control Panel</span>
+            <span className="text-[9px] text-red-600 font-bold uppercase tracking-wider leading-none block mt-1">Control Panel</span>
           </div>
           {isBackendConnected ? (
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Database Connected" />
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mt-0.5" title="Database Connected" />
           ) : (
-            <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Offline standalone mode active" />
+            <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse mt-0.5" title="Offline standalone mode active" />
           )}
         </div>
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all text-gray-700 cursor-pointer shadow-sm"
-          aria-label="Toggle Navigation Menu"
-        >
-          {isMobileMenuOpen ? <X className="w-5 h-5 text-red-600" /> : <Menu className="w-5 h-5" />}
-        </button>
+
+        {/* DESKTOP HORIZONTAL NAVIGATION TABS */}
+        <nav className="hidden md:flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab('dashboard')}
+            className={`h-10 px-4 rounded-xl flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'dashboard'
+                ? 'bg-red-600 text-white shadow-md shadow-red-650/15'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Dashboard</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('cars')}
+            className={`h-10 px-4 rounded-xl flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'cars'
+                ? 'bg-red-600 text-white shadow-md shadow-red-655/15'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <Car className="w-3.5 h-3.5" />
+            <span>Manage Cars</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('bookings')}
+            className={`h-10 px-4 rounded-xl flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'bookings'
+                ? 'bg-red-600 text-white shadow-md shadow-red-655/15'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <CalendarIcon className="w-3.5 h-3.5" />
+            <span>Bookings</span>
+            {bookings.filter(b => b.status === 'Pending').length > 0 && (
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${
+                activeTab === 'bookings' ? 'bg-white text-red-600' : 'bg-red-600 text-white'
+              }`}>
+                {bookings.filter(b => b.status === 'Pending').length}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('feedbacks')}
+            className={`h-10 px-4 rounded-xl flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'feedbacks'
+                ? 'bg-red-600 text-white shadow-md shadow-red-655/15'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Feedbacks</span>
+            {unreadFeedbacks.length > 0 && (
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${
+                activeTab === 'feedbacks' ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
+              }`}>
+                {unreadFeedbacks.length}
+              </span>
+            )}
+          </button>
+        </nav>
+
+        {/* DESKTOP STATUS ALERTS & ACTION BUTTONS */}
+        <div className="flex items-center gap-4">
+          {/* Offline alert display for desktop */}
+          {!isBackendConnected && (
+            <div className="hidden lg:flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-1 text-[10px] text-yellow-800">
+              <AlertTriangle className="w-3 h-3 text-yellow-600" />
+              <span>Offline Standalone Mode</span>
+            </div>
+          )}
+
+          {/* Desktop Log Out Button */}
+          <button
+            type="button"
+            onClick={handleLogOut}
+            className="hidden md:flex h-10 px-3 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100 rounded-xl items-center gap-2 text-xs font-bold text-gray-600 transition-all cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5 text-red-600" />
+            <span>Lock Console</span>
+          </button>
+
+          {/* Mobile Menu Hamburger Button */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all text-gray-700 md:hidden cursor-pointer shadow-xs"
+            aria-label="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5 text-red-600" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
 
       {/* Backdrop overlay for mobile sidebar drawer */}
@@ -735,31 +829,19 @@ export default function App() {
         />
       )}
 
-      {/* SIDEBAR NAVIGATION */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-50 border-r border-gray-200 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out md:static md:translate-x-0 h-full ${
-        isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'
+      {/* MOBILE MENU DRAWER (Hidden on Desktop) */}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-50 border-r border-gray-200 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out md:hidden h-full ${
+        isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
       }`}>
         <div>
-          {/* Logo Brand Header (visible on desktop) */}
-          <div className="p-6 border-b border-gray-200 hidden md:flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-black tracking-tight text-gray-900">My Car Hub</h2>
-              <span className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Control Panel</span>
-            </div>
-            {isBackendConnected ? (
-              <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" title="Database Connected" />
-            ) : (
-              <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full animate-pulse" title="Offline standalone mode active" />
-            )}
-          </div>
-
-          {/* Close Menu Button on Mobile Sidebar */}
-          <div className="p-4 border-b border-gray-100 flex md:hidden items-center justify-between bg-white">
+          {/* Mobile Drawer Header */}
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white">
             <div>
               <h2 className="text-lg font-black tracking-tight text-gray-900 leading-none">Navigation</h2>
-              <span className="text-[9px] text-red-600 font-bold uppercase">Menu options</span>
+              <span className="text-[9px] text-red-600 font-bold uppercase mt-1 block">Menu options</span>
             </div>
             <button 
+              type="button"
               onClick={() => setIsMobileMenuOpen(false)}
               className="w-8 h-8 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center border border-red-200 cursor-pointer text-red-600"
             >
@@ -767,8 +849,10 @@ export default function App() {
             </button>
           </div>
 
+          {/* Navigation Links */}
           <nav className="p-4 space-y-1">
             <button
+              type="button"
               onClick={() => {
                 setActiveTab('dashboard');
                 setIsMobileMenuOpen(false);
@@ -784,6 +868,7 @@ export default function App() {
             </button>
 
             <button
+              type="button"
               onClick={() => {
                 setActiveTab('cars');
                 setIsMobileMenuOpen(false);
@@ -799,6 +884,7 @@ export default function App() {
             </button>
 
             <button
+              type="button"
               onClick={() => {
                 setActiveTab('bookings');
                 setIsMobileMenuOpen(false);
@@ -819,6 +905,7 @@ export default function App() {
             </button>
 
             <button
+              type="button"
               onClick={() => {
                 setActiveTab('feedbacks');
                 setIsMobileMenuOpen(false);
@@ -840,6 +927,7 @@ export default function App() {
           </nav>
         </div>
 
+        {/* Footer Offline Notice & Logout Actions */}
         <div className="p-4 border-t border-gray-200 space-y-4">
           {!isBackendConnected && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex gap-2 text-xs text-yellow-800">
@@ -849,6 +937,7 @@ export default function App() {
           )}
 
           <button
+            type="button"
             onClick={() => {
               handleLogOut();
               setIsMobileMenuOpen(false);
