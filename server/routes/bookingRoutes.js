@@ -12,76 +12,61 @@ const sendBookingEmail = async (bookingData) => {
 
   try {
     const ownerEmail = OWNER_EMAIL || 'guestguest615242004@gmail.com';
+    const toEmails = [bookingData.email, ownerEmail];
 
     await sendMailHelper({
-      to: ownerEmail,
+      to: toEmails,
       replyTo: bookingData.email,
-      subject: `🚗 New Car Booking Alert - ID: ${bookingData.bookingId}`,
+      subject: `⏳ Booking Request Received & Pending - ID: ${bookingData.bookingId}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
           <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
             <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub</h1>
-            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">NEW BOOKING REQUEST RECEIVED</p>
+            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">BOOKING REQUEST RECEIVED & PENDING REVIEW</p>
           </div>
           
-          <div style="margin-bottom: 20px;">
-            <h3 style="color: #030213; border-bottom: 1px solid #eee; padding-bottom: 8px;">Customer Information</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 6px 0; color: #666; width: 40%;"><strong>Full Name:</strong></td>
-                <td style="padding: 6px 0; color: #111;">${bookingData.customerName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #666;"><strong>Email Address:</strong></td>
-                <td style="padding: 6px 0; color: #111;"><a href="mailto:${bookingData.email}" style="color: #d4183d; text-decoration: none;">${bookingData.email}</a></td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #666;"><strong>Phone Number:</strong></td>
-                <td style="padding: 6px 0; color: #111;"><a href="tel:${bookingData.phone}" style="color: #d4183d; text-decoration: none; font-weight: bold;">${bookingData.phone}</a></td>
-              </tr>
-            </table>
+          <div style="margin-bottom: 25px; text-align: center;">
+            <h2 style="color: #030213; margin: 0 0 10px 0;">Dear ${bookingData.customerName},</h2>
+            <p style="color: #444; font-size: 15px; line-height: 1.6; margin: 0;">
+              Thank you for reserving a car with My Car Hub! Your booking request with ID <strong>${bookingData.bookingId}</strong> has been successfully received and is currently <strong>Pending Review</strong>.
+            </p>
+            <p style="color: #666; font-size: 13px; line-height: 1.6; margin-top: 10px;">
+              Our administrator team is verifying the availability of the vehicle. You will receive an official booking confirmation email with a PDF summary receipt as soon as your booking is approved!
+            </p>
           </div>
 
-          <div style="margin-bottom: 20px;">
-            <h3 style="color: #030213; border-bottom: 1px solid #eee; padding-bottom: 8px;">Rental Vehicle Details</h3>
-            <table style="width: 100%; border-collapse: collapse;">
+          <div style="margin-bottom: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
+            <h3 style="color: #030213; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 6px; font-size: 14px;">RENTAL VEHICLE & SCHEDULE SUMMARY</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
               <tr>
-                <td style="padding: 6px 0; color: #666; width: 40%;"><strong>Car Reserved:</strong></td>
-                <td style="padding: 6px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
+                <td style="padding: 4px 0; color: #666; width: 40%;"><strong>Vehicle Reserved:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
               </tr>
               <tr>
-                <td style="padding: 6px 0; color: #666;"><strong>Car Number:</strong></td>
-                <td style="padding: 6px 0; color: #111;">${bookingData.carId}</td>
+                <td style="padding: 4px 0; color: #666;"><strong>Booking ID:</strong></td>
+                <td style="padding: 4px 0; color: #111;"><code>${bookingData.bookingId}</code></td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Pickup Schedule:</strong></td>
+                <td style="padding: 4px 0; color: #111;">${bookingData.pickupDate} at ${bookingData.pickupTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Drop Schedule:</strong></td>
+                <td style="padding: 4px 0; color: #111;">${bookingData.dropDate} at ${bookingData.dropTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Rental Duration:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.durationDays} Day(s)</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Estimated Price:</strong></td>
+                <td style="padding: 4px 0; color: #d4183d; font-weight: bold; font-size: 14px;">₹${bookingData.totalAmount}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Current Status:</strong></td>
+                <td style="padding: 4px 0; color: #d4183d; font-weight: bold; font-size: 12px; uppercase;">PENDING APPROVAL</td>
               </tr>
             </table>
-          </div>
-
-          <div style="margin-bottom: 20px;">
-            <h3 style="color: #030213; border-bottom: 1px solid #eee; padding-bottom: 8px;">Schedule & Duration</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 6px 0; color: #666; width: 40%;"><strong>Pickup Date/Time:</strong></td>
-                <td style="padding: 6px 0; color: #111;">${bookingData.pickupDate} at ${bookingData.pickupTime}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #666;"><strong>Drop Date/Time:</strong></td>
-                <td style="padding: 6px 0; color: #111;">${bookingData.dropDate} at ${bookingData.dropTime}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #666;"><strong>Total Duration:</strong></td>
-                <td style="padding: 6px 0; color: #111; font-weight: bold;">${bookingData.durationDays} Day(s)</td>
-              </tr>
-            </table>
-          </div>
-
-          <div style="background-color: #f7f7f7; border: 1px solid #e5e5e5; border-radius: 8px; padding: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <span style="color: #666; font-size: 14px;"><strong>Booking ID:</strong> <code style="background-color: #eee; padding: 2px 6px; border-radius: 4px;">${bookingData.bookingId}</code></span>
-            </div>
-            <div style="text-align: right; margin-top: 5px;">
-              <span style="color: #666; font-size: 14px; display: block;">Total Amount:</span>
-              <strong style="color: #d4183d; font-size: 20px;">₹${bookingData.totalAmount}</strong>
-            </div>
           </div>
 
           <div style="text-align: center; color: #888; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
