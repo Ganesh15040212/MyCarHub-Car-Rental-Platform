@@ -1407,35 +1407,127 @@ export default function App() {
                           </span>
                         </td>
                         <td className="py-4 text-right">
-                          <div className="flex gap-2 justify-end">
-                            {booking.status === 'Pending' && (
-                              <button
-                                onClick={() => handleBookingStatus(booking.bookingId, 'Confirmed')}
-                                className="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-all border border-blue-200 cursor-pointer"
-                                title="Confirm Request"
-                              >
-                                <Check className="w-4 h-4" />
-                              </button>
-                            )}
-                            
-                            {booking.status === 'Confirmed' && (
-                              <button
-                                onClick={() => handleBookingStatus(booking.bookingId, 'Completed')}
-                                className="w-8 h-8 rounded-full bg-green-50 hover:bg-green-100 text-green-600 flex items-center justify-center transition-all border border-green-200 cursor-pointer"
-                                title="Mark Completed"
-                              >
-                                <Check className="w-4 h-4" />
-                              </button>
-                            )}
+                          <div className="flex items-center gap-4 justify-end">
+                            {booking.status === 'Cancelled' ? (
+                              <div className="flex items-center gap-2 bg-red-50 border border-red-150 px-3 py-1.5 rounded-2xl animate-in fade-in duration-200">
+                                <span className="text-xs text-red-755 font-bold uppercase tracking-wider flex items-center gap-1">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-red-600" /> Cancelled
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleBookingStatus(booking.bookingId, 'Pending')}
+                                  className="text-[10px] font-bold bg-white text-red-600 border border-red-200 px-2 py-0.5 rounded-lg hover:bg-red-50 cursor-pointer transition-all"
+                                  title="Restore booking to Pending status"
+                                >
+                                  Re-open
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                {/* Sleek Interactive Stepper Container */}
+                                <div className="flex items-center select-none bg-slate-50 border border-gray-200/80 px-3 py-1.5 rounded-2xl shadow-sm">
+                                  {/* Step 1: Pending */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleBookingStatus(booking.bookingId, 'Pending')}
+                                    className="flex items-center gap-1.5 focus:outline-none cursor-pointer group"
+                                    title="Click to set status to Pending"
+                                  >
+                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold border transition-all ${
+                                      booking.status === 'Pending'
+                                        ? 'bg-yellow-500 border-yellow-500 text-white shadow-sm shadow-yellow-500/20'
+                                        : booking.status === 'Confirmed' || booking.status === 'Completed'
+                                          ? 'bg-green-500 border-green-500 text-white'
+                                          : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400'
+                                    }`}>
+                                      1
+                                    </div>
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                                      booking.status === 'Pending'
+                                        ? 'text-yellow-600'
+                                        : booking.status === 'Confirmed' || booking.status === 'Completed'
+                                          ? 'text-green-600'
+                                          : 'text-gray-400 group-hover:text-gray-600'
+                                    }`}>
+                                      Pending
+                                    </span>
+                                  </button>
 
-                            {booking.status !== 'Completed' && booking.status !== 'Cancelled' && (
-                              <button
-                                onClick={() => handleBookingStatus(booking.bookingId, 'Cancelled')}
-                                className="w-8 h-8 rounded-full bg-red-50 hover:bg-red-100 text-red-650 flex items-center justify-center transition-all border border-red-200 cursor-pointer"
-                                title="Cancel Rental"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
+                                  {/* Line 1 -> 2 */}
+                                  <div className={`w-6 h-0.5 mx-1 transition-colors ${
+                                    booking.status === 'Confirmed' || booking.status === 'Completed'
+                                      ? 'bg-green-500'
+                                      : 'bg-gray-200'
+                                  }`} />
+
+                                  {/* Step 2: Confirmed */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleBookingStatus(booking.bookingId, 'Confirmed')}
+                                    className="flex items-center gap-1.5 focus:outline-none cursor-pointer group"
+                                    title="Click to set status to Confirmed"
+                                  >
+                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold border transition-all ${
+                                      booking.status === 'Confirmed'
+                                        ? 'bg-blue-500 border-blue-500 text-white shadow-sm shadow-blue-500/20'
+                                        : booking.status === 'Completed'
+                                          ? 'bg-green-500 border-green-500 text-white'
+                                          : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400'
+                                    }`}>
+                                      2
+                                    </div>
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                                      booking.status === 'Confirmed'
+                                        ? 'text-blue-600'
+                                        : booking.status === 'Completed'
+                                          ? 'text-green-600'
+                                          : 'text-gray-400 group-hover:text-gray-600'
+                                    }`}>
+                                      Confirmed
+                                    </span>
+                                  </button>
+
+                                  {/* Line 2 -> 3 */}
+                                  <div className={`w-6 h-0.5 mx-1 transition-colors ${
+                                    booking.status === 'Completed'
+                                      ? 'bg-green-500'
+                                      : 'bg-gray-200'
+                                  }`} />
+
+                                  {/* Step 3: Completed */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleBookingStatus(booking.bookingId, 'Completed')}
+                                    className="flex items-center gap-1.5 focus:outline-none cursor-pointer group"
+                                    title="Click to set status to Completed"
+                                  >
+                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold border transition-all ${
+                                      booking.status === 'Completed'
+                                        ? 'bg-green-500 border-green-500 text-white shadow-sm shadow-green-500/20'
+                                        : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400'
+                                    }`}>
+                                      3
+                                    </div>
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                                      booking.status === 'Completed'
+                                        ? 'text-green-600'
+                                        : 'text-gray-400 group-hover:text-gray-600'
+                                    }`}>
+                                      Completed
+                                    </span>
+                                  </button>
+                                </div>
+
+                                {/* Quick Cancel Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleBookingStatus(booking.bookingId, 'Cancelled')}
+                                  className="w-8 h-8 rounded-full bg-red-50 hover:bg-red-100 hover:text-red-750 text-red-650 flex items-center justify-center transition-all border border-red-200 cursor-pointer shadow-sm shrink-0"
+                                  title="Cancel Booking"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
                             )}
                           </div>
                         </td>
