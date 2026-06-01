@@ -1374,8 +1374,7 @@ export default function App() {
                       <th className="py-4">Schedule Slots</th>
                       <th className="py-4">Rental Duration</th>
                       <th className="py-4">Pricing</th>
-                      <th className="py-4 text-center">Status</th>
-                      <th className="py-4 text-right">Workflow Actions</th>
+                      <th className="py-4 text-center">Workflow & Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1397,64 +1396,50 @@ export default function App() {
                         <td className="py-4 font-bold text-gray-900">{booking.durationDays} Day(s)</td>
                         <td className="py-4 text-green-600 font-bold">₹{booking.totalAmount}</td>
                         <td className="py-4 text-center">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                            booking.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-250' :
-                            booking.status === 'Confirmed' ? 'bg-blue-50 text-blue-700 border-blue-250' :
-                            booking.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-250' :
-                            'bg-red-50 text-red-700 border-red-250'
-                          }`}>
-                            {booking.status}
-                          </span>
-                        </td>
-                        <td className="py-4 text-right">
-                          <div className="flex items-center gap-4 justify-end">
+                          <div className="flex flex-col items-center gap-2 justify-center py-1">
+                            {/* Active Status Badge */}
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-xs transition-all duration-300 ${
+                              booking.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-250' :
+                              booking.status === 'Confirmed' ? 'bg-blue-50 text-blue-700 border-blue-250' :
+                              booking.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-250' :
+                              'bg-red-50 text-red-700 border-red-250'
+                            }`}>
+                              {booking.status}
+                            </span>
+
                             {booking.status === 'Cancelled' ? (
-                              <div className="flex items-center gap-2 bg-red-50 border border-red-150 px-3 py-1.5 rounded-2xl animate-in fade-in duration-200">
-                                <span className="text-xs text-red-755 font-bold uppercase tracking-wider flex items-center gap-1">
-                                  <AlertTriangle className="w-3.5 h-3.5 text-red-600" /> Cancelled
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleBookingStatus(booking.bookingId, 'Pending')}
-                                  className="text-[10px] font-bold bg-white text-red-600 border border-red-200 px-2 py-0.5 rounded-lg hover:bg-red-50 cursor-pointer transition-all"
-                                  title="Restore booking to Pending status"
-                                >
-                                  Re-open
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleBookingStatus(booking.bookingId, 'Pending')}
+                                className="text-[9px] font-bold bg-white hover:bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-lg cursor-pointer transition-all shadow-xs"
+                                title="Re-open booking"
+                              >
+                                Re-open Booking
+                              </button>
                             ) : (
                               <div className="flex items-center gap-2">
-                                {/* Sleek Interactive Stepper Container */}
-                                <div className="flex items-center select-none bg-slate-50 border border-gray-200/80 px-3 py-1.5 rounded-2xl shadow-sm">
+                                {/* Compact visual stepper progress bar without wordy labels to prevent layout collapse */}
+                                <div className="flex items-center select-none bg-slate-50 border border-gray-200 px-2 py-1 rounded-xl shadow-xs shrink-0">
                                   {/* Step 1: Pending */}
                                   <button
                                     type="button"
                                     onClick={() => handleBookingStatus(booking.bookingId, 'Pending')}
-                                    className="flex items-center gap-1.5 focus:outline-none cursor-pointer group"
-                                    title="Click to set status to Pending"
+                                    className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title="Move status back to Pending"
                                   >
-                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold border transition-all ${
+                                    <div className={`w-full h-full rounded-full flex items-center justify-center transition-all ${
                                       booking.status === 'Pending'
-                                        ? 'bg-yellow-500 border-yellow-500 text-white shadow-sm shadow-yellow-500/20'
+                                        ? 'bg-yellow-500 text-white'
                                         : booking.status === 'Confirmed' || booking.status === 'Completed'
-                                          ? 'bg-green-500 border-green-500 text-white'
-                                          : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400'
+                                          ? 'bg-green-500 text-white'
+                                          : 'bg-white border-gray-300 text-gray-400'
                                     }`}>
                                       1
                                     </div>
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                                      booking.status === 'Pending'
-                                        ? 'text-yellow-600'
-                                        : booking.status === 'Confirmed' || booking.status === 'Completed'
-                                          ? 'text-green-600'
-                                          : 'text-gray-400 group-hover:text-gray-600'
-                                    }`}>
-                                      Pending
-                                    </span>
                                   </button>
 
-                                  {/* Line 1 -> 2 */}
-                                  <div className={`w-6 h-0.5 mx-1 transition-colors ${
+                                  {/* Connect line 1-2 */}
+                                  <div className={`w-4 h-0.5 transition-colors ${
                                     booking.status === 'Confirmed' || booking.status === 'Completed'
                                       ? 'bg-green-500'
                                       : 'bg-gray-200'
@@ -1464,31 +1449,22 @@ export default function App() {
                                   <button
                                     type="button"
                                     onClick={() => handleBookingStatus(booking.bookingId, 'Confirmed')}
-                                    className="flex items-center gap-1.5 focus:outline-none cursor-pointer group"
-                                    title="Click to set status to Confirmed"
+                                    className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title="Move status to Confirmed"
                                   >
-                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold border transition-all ${
+                                    <div className={`w-full h-full rounded-full flex items-center justify-center transition-all ${
                                       booking.status === 'Confirmed'
-                                        ? 'bg-blue-500 border-blue-500 text-white shadow-sm shadow-blue-500/20'
+                                        ? 'bg-blue-500 text-white'
                                         : booking.status === 'Completed'
-                                          ? 'bg-green-500 border-green-500 text-white'
-                                          : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400'
+                                          ? 'bg-green-500 text-white'
+                                          : 'bg-white border-gray-300 text-gray-400'
                                     }`}>
                                       2
                                     </div>
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                                      booking.status === 'Confirmed'
-                                        ? 'text-blue-600'
-                                        : booking.status === 'Completed'
-                                          ? 'text-green-600'
-                                          : 'text-gray-400 group-hover:text-gray-600'
-                                    }`}>
-                                      Confirmed
-                                    </span>
                                   </button>
 
-                                  {/* Line 2 -> 3 */}
-                                  <div className={`w-6 h-0.5 mx-1 transition-colors ${
+                                  {/* Connect line 2-3 */}
+                                  <div className={`w-4 h-0.5 transition-colors ${
                                     booking.status === 'Completed'
                                       ? 'bg-green-500'
                                       : 'bg-gray-200'
@@ -1498,23 +1474,16 @@ export default function App() {
                                   <button
                                     type="button"
                                     onClick={() => handleBookingStatus(booking.bookingId, 'Completed')}
-                                    className="flex items-center gap-1.5 focus:outline-none cursor-pointer group"
-                                    title="Click to set status to Completed"
+                                    className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title="Move status to Completed"
                                   >
-                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold border transition-all ${
+                                    <div className={`w-full h-full rounded-full flex items-center justify-center transition-all ${
                                       booking.status === 'Completed'
-                                        ? 'bg-green-500 border-green-500 text-white shadow-sm shadow-green-500/20'
-                                        : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400'
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-white border-gray-300 text-gray-400'
                                     }`}>
                                       3
                                     </div>
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                                      booking.status === 'Completed'
-                                        ? 'text-green-600'
-                                        : 'text-gray-400 group-hover:text-gray-600'
-                                    }`}>
-                                      Completed
-                                    </span>
                                   </button>
                                 </div>
 
@@ -1522,10 +1491,10 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => handleBookingStatus(booking.bookingId, 'Cancelled')}
-                                  className="w-8 h-8 rounded-full bg-red-50 hover:bg-red-100 hover:text-red-750 text-red-650 flex items-center justify-center transition-all border border-red-200 cursor-pointer shadow-sm shrink-0"
+                                  className="w-6 h-6 rounded-full bg-red-50 hover:bg-red-100 hover:text-red-750 text-red-650 flex items-center justify-center transition-all border border-red-200 cursor-pointer shadow-xs shrink-0"
                                   title="Cancel Booking"
                                 >
-                                  <X className="w-4 h-4" />
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             )}
