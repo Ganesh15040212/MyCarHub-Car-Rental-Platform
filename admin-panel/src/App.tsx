@@ -1296,19 +1296,14 @@ export default function App() {
                             )}
                           </div>
                         ) : (
-                          <div className="space-y-1">
-                            <input
-                              type="url"
-                              value={carFormData.image}
-                              onChange={e => setCarFormData(prev => ({ ...prev, image: e.target.value }))}
-                              placeholder="https://example.com/car-photo.png"
-                              className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
-                              required
-                            />
-                            <p className="text-[11px] text-red-500 font-semibold pl-1">
-                              * Web Link accepts only direct image URLs (e.g., ending with .png, .jpg, .jpeg, .webp, .gif)
-                            </p>
-                          </div>
+                          <input
+                            type="url"
+                            value={carFormData.image}
+                            onChange={e => setCarFormData(prev => ({ ...prev, image: e.target.value }))}
+                            placeholder="https://example.com/car-photo.png"
+                            className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
+                            required
+                          />
                         )}
                       </div>
 
@@ -1391,46 +1386,41 @@ export default function App() {
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="space-y-1 w-full">
-                                    <div className="flex gap-3 items-center">
-                                      <input
-                                        type="url"
-                                        value={imageUrl}
-                                        onChange={e => {
-                                          const newImages = [...carFormData.images];
-                                          newImages[idx] = e.target.value;
-                                          setCarFormData(prev => ({ ...prev, images: newImages }));
-                                        }}
-                                        placeholder={`https://example.com/view-${idx + 1}.png`}
-                                        className="flex-1 h-10 px-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-xs transition-all text-gray-900"
-                                      />
-                                      {imageUrl && (
-                                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
-                                          <img 
-                                            src={imageUrl} 
-                                            alt={`Gallery ${idx + 1}`} 
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100x100/ffffff/d4183d?text=Error';
-                                            }}
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const newImages = [...carFormData.images];
-                                              newImages[idx] = '';
-                                              setCarFormData(prev => ({ ...prev, images: newImages }));
-                                            }}
-                                            className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
-                                          >
-                                            <X className="w-3.5 h-3.5" />
-                                          </button>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <p className="text-[10px] text-red-500 font-semibold pl-1">
-                                      * Web Link accepts only direct image URLs (e.g., ending with .png, .jpg, .jpeg, .webp, .gif)
-                                    </p>
+                                  <div className="flex gap-3 items-center">
+                                    <input
+                                      type="url"
+                                      value={imageUrl}
+                                      onChange={e => {
+                                        const newImages = [...carFormData.images];
+                                        newImages[idx] = e.target.value;
+                                        setCarFormData(prev => ({ ...prev, images: newImages }));
+                                      }}
+                                      placeholder={`https://example.com/view-${idx + 1}.png`}
+                                      className="flex-1 h-10 px-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-xs transition-all text-gray-900"
+                                    />
+                                    {imageUrl && (
+                                      <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
+                                        <img 
+                                          src={imageUrl} 
+                                          alt={`Gallery ${idx + 1}`} 
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100x100/ffffff/d4183d?text=Error';
+                                          }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const newImages = [...carFormData.images];
+                                            newImages[idx] = '';
+                                            setCarFormData(prev => ({ ...prev, images: newImages }));
+                                          }}
+                                          className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
