@@ -1463,7 +1463,8 @@ export default function App() {
                       <th className="py-4">Schedule Slots</th>
                       <th className="py-4">Rental Duration</th>
                       <th className="py-4">Pricing</th>
-                      <th className="py-4 text-center">Workflow & Status</th>
+                      <th className="py-4 text-center">Status</th>
+                      <th className="py-4 text-right">Workflow Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1485,30 +1486,30 @@ export default function App() {
                         <td className="py-4 font-bold text-gray-900">{booking.durationDays} Day(s)</td>
                         <td className="py-4 text-green-600 font-bold">₹{booking.totalAmount}</td>
                         <td className="py-4 text-center">
-                          <div className="flex flex-col items-center gap-2 justify-center py-1">
-                            {/* Active Status Badge */}
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-xs transition-all duration-300 ${
-                              booking.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-250' :
-                              booking.status === 'Confirmed' ? 'bg-blue-50 text-blue-700 border-blue-250' :
-                              booking.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-250' :
-                              'bg-red-50 text-red-700 border-red-250'
-                            }`}>
-                              {booking.status}
-                            </span>
-
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-xs transition-all duration-300 ${
+                            booking.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-250' :
+                            booking.status === 'Confirmed' ? 'bg-blue-50 text-blue-700 border-blue-250' :
+                            booking.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-250' :
+                            'bg-red-50 text-red-700 border-red-250'
+                          }`}>
+                            {booking.status}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex items-center gap-4 justify-end py-1">
                             {booking.status === 'Cancelled' ? (
                               <button
                                 type="button"
                                 onClick={() => handleBookingStatus(booking.bookingId, 'Pending')}
-                                className="text-[9px] font-bold bg-white hover:bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-lg cursor-pointer transition-all shadow-xs"
+                                className="text-[9px] font-bold bg-white hover:bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 rounded-xl cursor-pointer transition-all shadow-xs"
                                 title="Re-open booking"
                               >
-                                Re-open Booking
+                                Re-open
                               </button>
                             ) : (
                               <div className="flex items-center gap-2">
-                                {/* Compact visual stepper progress bar without wordy labels to prevent layout collapse */}
-                                <div className="flex items-center select-none bg-slate-50 border border-gray-200 px-2 py-1 rounded-xl shadow-xs shrink-0">
+                                {/* Compact visual stepper progress bar without wordy labels */}
+                                <div className="flex items-center select-none bg-slate-50 border border-gray-250/50 px-2 py-1 rounded-xl shadow-xs shrink-0">
                                   {/* Step 1: Pending */}
                                   <button
                                     type="button"

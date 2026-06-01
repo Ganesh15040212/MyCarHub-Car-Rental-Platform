@@ -27,23 +27,7 @@ export default function CarGalleryModal({ car, isOpen, onClose }: CarGalleryModa
 
   images = [...images, ...validAdditionalImages];
 
-  // If there are no valid additional images, generate fallbacks to ensure we show 11 images total
-  if (images.length <= 1) {
-    const name = encodeURIComponent(car.name);
-    images = [
-      car.image || hatchbackImg,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Front+View`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Rear+View`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Side+Profile`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Dashboard`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Front+Seats`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Rear+Seats`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Boot+Space`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Engine+Bay`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Wheel+Detail`,
-      `https://placehold.co/800x500/f8f9fa/374151?text=${name}+-+Interior+Roof`
-    ];
-  }
+
 
   const handlePrevious = () => {
     setCurrentIndex((prevIndex) => 
