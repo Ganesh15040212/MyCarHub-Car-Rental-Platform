@@ -62,7 +62,7 @@ const sendBookingEmail = async (bookingData) => {
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
 
   try {
-    const ownerEmail = OWNER_EMAIL || 'guestguest615242004@gmail.com';
+    const ownerEmail = OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com';
     const toEmails = [bookingData.email, ownerEmail];
 
     await sendMailHelper({
@@ -232,7 +232,7 @@ const generateReceiptPDF = (bookingData, car = null) => {
       
       doc.fillColor('#999999').fontSize(9).font('Helvetica');
       doc.text('Thank you for choosing My Car Hub!', 50, footerY + 15, { align: 'center', width: 495 });
-      doc.text('For queries, contact support at guestguest615242004@gmail.com or call +91 9597693716', 50, footerY + 30, { align: 'center', width: 495 });
+      doc.text('For queries, contact support at ganeshmanivnr2004@gmail.com or call +91 9597693716', 50, footerY + 30, { align: 'center', width: 495 });
       doc.text('This is a computer-generated confirmation receipt and does not require a physical signature.', 50, footerY + 45, { align: 'center', width: 495 });
       
       doc.end();
@@ -258,7 +258,7 @@ const sendConfirmationEmail = async (bookingData) => {
     // Generate PDF receipt buffer
     const pdfBuffer = await generateReceiptPDF(bookingData, car);
 
-    const toEmails = [bookingData.email, OWNER_EMAIL || 'guestguest615242004@gmail.com'];
+    const toEmails = [bookingData.email, OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com'];
 
     await sendMailHelper({
       to: toEmails,
@@ -340,7 +340,7 @@ const sendCancellationEmail = async (bookingData) => {
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
 
   try {
-    const toEmails = [bookingData.email, OWNER_EMAIL || 'guestguest615242004@gmail.com'];
+    const toEmails = [bookingData.email, OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com'];
 
     await sendMailHelper({
       to: toEmails,
@@ -396,7 +396,7 @@ const sendCompletionEmail = async (bookingData) => {
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
 
   try {
-    const toEmails = [bookingData.email, OWNER_EMAIL || 'guestguest615242004@gmail.com'];
+    const toEmails = [bookingData.email, OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com'];
 
     await sendMailHelper({
       to: toEmails,
@@ -452,7 +452,7 @@ const sendCorrectionEmail = async (bookingData, oldStatus, newStatus) => {
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
 
   try {
-    const toEmails = [bookingData.email, OWNER_EMAIL || 'guestguest615242004@gmail.com'];
+    const toEmails = [bookingData.email, OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com'];
 
     await sendMailHelper({
       to: toEmails,
