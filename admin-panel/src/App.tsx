@@ -362,10 +362,10 @@ export default function App() {
   };
 
   const handleImageUpload = async (file: File, callback: (url: string) => void) => {
-    // Validate image size limit (must be less than 5 MB)
-    const MAX_SIZE = 5 * 1024 * 1024;
+    // Validate image size limit (must be less than 1 MB)
+    const MAX_SIZE = 1 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      toast.error("Image file size must be less than 5 MB!");
+      toast.error("Image file size must be less than 1 MB!");
       return;
     }
 
@@ -1405,7 +1405,7 @@ export default function App() {
                             </div>
                             {!carFormData.image && (
                               <p className="text-[10px] text-red-500 font-semibold pl-1">
-                                * Ex: Image file size must be less than 5 MB
+                                * Ex: Image file size must be less than 1 MB
                               </p>
                             )}
                           </div>
@@ -1509,7 +1509,7 @@ export default function App() {
                                     </div>
                                     {!imageUrl && (
                                       <p className="text-[10px] text-red-500 font-semibold pl-1">
-                                        * Ex: Image file size must be less than 5 MB
+                                        * Ex: Image file size must be less than 1 MB
                                       </p>
                                     )}
                                   </div>
