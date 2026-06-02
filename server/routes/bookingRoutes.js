@@ -526,30 +526,34 @@ const sendCompletionEmail = async (bookingData) => {
 // Helper to send a correction email when status is wrongly selected and reverted backward
 const sendCorrectionEmail = async (bookingData, oldStatus, newStatus) => {
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
+  const ownerEmail = OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com';
 
   try {
-    const toEmails = [bookingData.email, OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com'];
+    const toEmails = [bookingData.email, ownerEmail];
 
     await sendMailHelper({
       to: toEmails,
-      subject: `Correction: Booking Reservation Update - ID: ${bookingData.bookingId}`,
+      replyTo: ownerEmail,
+      subject: `Your Booking not Completed, sorry for the mistake, The Correct Status mail for you will be sent soon! - ID: ${bookingData.bookingId}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
           <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
             <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub</h1>
-            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">RESERVATION STATUS CORRECTION</p>
+            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px; line-height: 1.4;">
+              Your Booking not Completed, sorry for the mistake, The Correct Status mail for you will be sent soon!
+            </p>
           </div>
           
           <div style="margin-bottom: 25px; text-align: center;">
             <h2 style="color: #030213; margin: 0 0 10px 0;">Dear ${bookingData.customerName},</h2>
-            <p style="color: #444; font-size: 15px; line-height: 1.6; margin: 0;">
-              Please accept our apologies! A previous status notification marking your booking as <strong>${oldStatus}</strong> was sent by mistake.
+            <p style="color: #111; font-size: 15px; font-weight: bold; line-height: 1.6; margin: 15px 0; color: #d4183d;">
+              Your Booking not Completed, sorry for the mistake, The Correct Status mail for you will be sent soon!
             </p>
-            <p style="color: #111; font-size: 15px; font-weight: bold; margin-top: 15px;">
-              We have corrected your car rental reservation status to: <span style="color: #d4183d;">${newStatus}</span>
+            <p style="color: #444; font-size: 14px; line-height: 1.6; margin: 0;">
+              Please accept our apologies! A previous status notification marking your booking reservation as <strong>${oldStatus}</strong> was sent by mistake.
             </p>
             <p style="color: #666; font-size: 13px; line-height: 1.6; margin-top: 10px;">
-              Please disregard the previous email. Your active reservation is secured and remains in progress under the correct status.
+              We have reverted the status of your reservation back to <strong>Pending</strong> review while our administration team corrects this mistake. Please disregard the previous email.
             </p>
           </div>
 
@@ -565,8 +569,8 @@ const sendCorrectionEmail = async (bookingData, oldStatus, newStatus) => {
                 <td style="padding: 4px 0; color: #111;"><code>${bookingData.bookingId}</code></td>
               </tr>
               <tr>
-                <td style="padding: 4px 0; color: #666;"><strong>Corrected Status:</strong></td>
-                <td style="padding: 4px 0; color: #d4183d; font-weight: bold;">${newStatus}</td>
+                <td style="padding: 4px 0; color: #666;"><strong>Current Status:</strong></td>
+                <td style="padding: 4px 0; color: #d4183d; font-weight: bold; font-size: 12px; uppercase;">PENDING CORRECTION</td>
               </tr>
             </table>
           </div>
@@ -577,6 +581,7 @@ const sendCorrectionEmail = async (bookingData, oldStatus, newStatus) => {
         </div>
       `
     });
+    console.log(`[Mail Helper] Correction apologies email sent successfully to: ${bookingData.email}`);
   } catch (error) {
     console.error('Error sending correction email:', error);
   }
@@ -671,34 +676,29 @@ router.put('/:id', async (req, res) => {
       booking.status = newStatus;
       const updatedBooking = await booking.save();
 
-      // Trigger correction email if transitioned backward or restored from mistaken Cancellation
+      // Trigger correction email if transitioned backward or restored from mistaken Cancellation to Pending
       const isRevertedBackward = 
         (oldStatus === 'Completed' && (newStatus === 'Confirmed' || newStatus === 'Pending')) ||
         (oldStatus === 'Confirmed' && newStatus === 'Pending') ||
-        (oldStatus === 'Cancelled' && (newStatus === 'Confirmed' || newStatus === 'Pending'));
+        (oldStatus === 'Cancelled' && newStatus === 'Pending');
 
       if (isRevertedBackward) {
         await sendCorrectionEmail(updatedBooking, oldStatus, newStatus);
-      }
+      } else {
+        // Send Confirmation email if transitioned to Confirmed
+        if (newStatus === 'Confirmed' && oldStatus !== 'Confirmed') {
+          await sendConfirmationEmail(updatedBooking);
+        }
 
-      // Send Pending email if transitioned to Pending
-      if (newStatus === 'Pending' && oldStatus !== 'Pending') {
-        await sendBookingEmail(updatedBooking);
-      }
+        // Send Cancellation email if transitioned to Cancelled
+        if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
+          await sendCancellationEmail(updatedBooking);
+        }
 
-      // Send Confirmation email if transitioned to Confirmed
-      if (newStatus === 'Confirmed' && oldStatus !== 'Confirmed') {
-        await sendConfirmationEmail(updatedBooking);
-      }
-
-      // Send Cancellation email if transitioned to Cancelled
-      if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
-        await sendCancellationEmail(updatedBooking);
-      }
-
-      // Send Completion email if transitioned to Completed
-      if (newStatus === 'Completed' && oldStatus !== 'Completed') {
-        await sendCompletionEmail(updatedBooking);
+        // Send Completion email if transitioned to Completed
+        if (newStatus === 'Completed' && oldStatus !== 'Completed') {
+          await sendCompletionEmail(updatedBooking);
+        }
       }
 
       // Dynamically recalculate and update car availability based on all remaining active confirmed bookings
