@@ -310,11 +310,17 @@ export default function App() {
       // In offline mode, populate paginated bookings from cached bookings list
       if (cachedBookings) {
         const allBookings = JSON.parse(cachedBookings) as IBooking[];
-        const startIndex = (bookingPage - 1) * bookingLimit;
-        const endIndex = startIndex + bookingLimit;
-        setPaginatedBookings(allBookings.slice(startIndex, endIndex));
-        setTotalPages(Math.ceil(allBookings.length / bookingLimit) || 1);
-        setTotalBookingsCount(allBookings.length);
+        if (Array.isArray(allBookings)) {
+          const startIndex = (bookingPage - 1) * bookingLimit;
+          const endIndex = startIndex + bookingLimit;
+          setPaginatedBookings(allBookings.slice(startIndex, endIndex));
+          setTotalPages(Math.ceil(allBookings.length / bookingLimit) || 1);
+          setTotalBookingsCount(allBookings.length);
+        } else {
+          setPaginatedBookings([]);
+          setTotalPages(1);
+          setTotalBookingsCount(0);
+        }
       }
     } finally {
       setIsLoading(false);
@@ -327,9 +333,23 @@ export default function App() {
       const res = await fetch(`${API_URL}/bookings?page=${page}&limit=${bookingLimit}`);
       if (res.ok) {
         const data = await res.json();
-        setPaginatedBookings(data.bookings);
-        setTotalPages(data.totalPages);
-        setTotalBookingsCount(data.totalBookings);
+        if (data && Array.isArray(data.bookings)) {
+          // Standard paginated backend response
+          setPaginatedBookings(data.bookings);
+          setTotalPages(data.totalPages || 1);
+          setTotalBookingsCount(data.totalBookings || 0);
+        } else if (Array.isArray(data)) {
+          // Fallback if backend returned plain array (e.g., running old server code before restart)
+          const startIndex = (page - 1) * bookingLimit;
+          const endIndex = startIndex + bookingLimit;
+          setPaginatedBookings(data.slice(startIndex, endIndex));
+          setTotalPages(Math.ceil(data.length / bookingLimit) || 1);
+          setTotalBookingsCount(data.length);
+        } else {
+          setPaginatedBookings([]);
+          setTotalPages(1);
+          setTotalBookingsCount(0);
+        }
         setIsBackendConnected(true);
       } else {
         throw new Error();
@@ -341,11 +361,17 @@ export default function App() {
       const cachedBookingsStr = localStorage.getItem('mch_bookings');
       if (cachedBookingsStr) {
         const allBookings = JSON.parse(cachedBookingsStr) as IBooking[];
-        const startIndex = (page - 1) * bookingLimit;
-        const endIndex = startIndex + bookingLimit;
-        setPaginatedBookings(allBookings.slice(startIndex, endIndex));
-        setTotalPages(Math.ceil(allBookings.length / bookingLimit) || 1);
-        setTotalBookingsCount(allBookings.length);
+        if (Array.isArray(allBookings)) {
+          const startIndex = (page - 1) * bookingLimit;
+          const endIndex = startIndex + bookingLimit;
+          setPaginatedBookings(allBookings.slice(startIndex, endIndex));
+          setTotalPages(Math.ceil(allBookings.length / bookingLimit) || 1);
+          setTotalBookingsCount(allBookings.length);
+        } else {
+          setPaginatedBookings([]);
+          setTotalPages(1);
+          setTotalBookingsCount(0);
+        }
       }
     } finally {
       if (!silent) setIsLoading(false);
@@ -1634,7 +1660,7 @@ export default function App() {
               <p className="text-gray-500 text-sm font-semibold">{totalBookingsCount} reservations on record.</p>
             </div>
 
-            {paginatedBookings.length > 0 ? (
+            {(paginatedBookings || []).length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1000px] text-left text-sm text-gray-800">
                   <thead>
@@ -1650,7 +1676,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {paginatedBookings.map((booking) => (
+                    {(paginatedBookings || []).map((booking) => (
                       <tr key={booking.bookingId} className="hover:bg-gray-50/50 transition-all">
                         <td className="py-4 font-mono font-bold text-gray-500">{booking.bookingId}</td>
                         <td className="py-4">
