@@ -109,7 +109,7 @@ export default function App() {
   // Cloudinary Storage Integration States
   const [isCloudinarySettingsOpen, setIsCloudinarySettingsOpen] = useState(false);
   const [cloudinaryCloudName, setCloudinaryCloudName] = useState(
-    localStorage.getItem('mch_cloudinary_cloud_name') || 'dphwz3hqp'
+    localStorage.getItem('mch_cloudinary_cloud_name') || 'ddnyi9k3t'
   );
   const [cloudinaryUploadPreset, setCloudinaryUploadPreset] = useState(
     localStorage.getItem('mch_cloudinary_upload_preset') || 'mycarhub_preset'
@@ -1374,7 +1374,7 @@ export default function App() {
                             <div className="flex gap-4 items-center">
                               <label className="flex-1 flex flex-col items-center justify-center h-12 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-500 hover:bg-red-50/20 cursor-pointer transition-all">
                                 <span className="text-xs font-semibold text-gray-600 truncate px-4">
-                                  {carFormData.image ? (carFormData.image.startsWith('data:image/') ? "✓ Main Image Selected (Base64)" : "✓ URL Selected") : "Choose Main Image File..."}
+                                  {carFormData.image ? (carFormData.image.startsWith('data:image/') || carFormData.image.includes('cloudinary.com') ? "✓ Main Image Uploaded" : "✓ URL Selected") : "Choose Main Image File..."}
                                 </span>
                                 <input
                                   type="file"
@@ -1434,7 +1434,7 @@ export default function App() {
                           {Array(10).fill(0).map((_, idx) => {
                             const mode = imageModes[`gallery-${idx}`] || 'upload';
                             const imageUrl = carFormData.images[idx] || '';
-                            const isUploaded = imageUrl.startsWith('data:image/');
+                            const isUploaded = imageUrl.startsWith('data:image/') || imageUrl.includes('cloudinary.com');
 
                             return (
                               <div key={idx} className="bg-slate-50/50 p-4 rounded-2xl border border-gray-200/60 space-y-3">
