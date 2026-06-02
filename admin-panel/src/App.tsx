@@ -1147,12 +1147,6 @@ export default function App() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-4">
                 <p className="text-gray-400 text-sm font-semibold">{cars.length} cars in catalog.</p>
-                <button
-                  onClick={() => setIsCloudinarySettingsOpen(!isCloudinarySettingsOpen)}
-                  className="px-3 py-1.5 border border-red-200 hover:border-red-600 rounded-xl text-[10px] font-bold text-red-600 hover:bg-red-50/50 transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  ☁️ Cloudinary Storage Config
-                </button>
               </div>
               <button
                 onClick={() => {
@@ -1166,57 +1160,6 @@ export default function App() {
                 <span>Add Fleet Car</span>
               </button>
             </div>
-
-            {/* Cloudinary Integration settings card */}
-            {isCloudinarySettingsOpen && (
-              <div className="bg-white border border-gray-200 p-6 rounded-3xl space-y-4 shadow-sm animate-in slide-in-from-top duration-300">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                    ☁️ Cloudinary Cloud Storage Configuration
-                  </h4>
-                  <button
-                    onClick={() => setIsCloudinarySettingsOpen(false)}
-                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Configure your Cloudinary credentials here to upload and host images instantly on Cloudinary's secure CDN instead of local database Base64 storage! Unsigned uploads must be enabled in your Cloudinary Dashboard.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Cloud Name</label>
-                    <input
-                      type="text"
-                      value={cloudinaryCloudName}
-                      onChange={e => {
-                        setCloudinaryCloudName(e.target.value);
-                        localStorage.setItem('mch_cloudinary_cloud_name', e.target.value);
-                      }}
-                      placeholder="e.g. dphwz3hqp"
-                      className="w-full h-11 px-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-xs transition-all text-gray-900"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Upload Preset (Unsigned)</label>
-                    <input
-                      type="text"
-                      value={cloudinaryUploadPreset}
-                      onChange={e => {
-                        setCloudinaryUploadPreset(e.target.value);
-                        localStorage.setItem('mch_cloudinary_upload_preset', e.target.value);
-                      }}
-                      placeholder="e.g. mycarhub_preset"
-                      className="w-full h-11 px-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-xs transition-all text-gray-900"
-                    />
-                  </div>
-                </div>
-                <div className="text-[10px] text-gray-400">
-                  * Note: If Cloudinary fails or is left blank, the system automatically falls back to our local high-compression Base64 storage.
-                </div>
-              </div>
-            )}
 
             {/* List Cars Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
