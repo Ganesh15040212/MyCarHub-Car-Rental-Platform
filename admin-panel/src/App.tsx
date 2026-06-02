@@ -105,6 +105,15 @@ export default function App() {
     images: Array(10).fill(''),
     available: true
   });
+
+  // Cloudinary Storage Integration States
+  const [isCloudinarySettingsOpen, setIsCloudinarySettingsOpen] = useState(false);
+  const [cloudinaryCloudName, setCloudinaryCloudName] = useState(
+    localStorage.getItem('mch_cloudinary_cloud_name') || 'dphwz3hqp'
+  );
+  const [cloudinaryUploadPreset, setCloudinaryUploadPreset] = useState(
+    localStorage.getItem('mch_cloudinary_upload_preset') || 'mycarhub_preset'
+  );
   
   const [imageModes, setImageModes] = useState<Record<string, 'url' | 'upload'>>({});
 
@@ -352,7 +361,7 @@ export default function App() {
     resetCarFormData();
   };
 
-  const handleImageUpload = (file: File, callback: (base64: string) => void) => {
+  const handleImageUpload = async (file: File, callback: (url: string) => void) => {
     // Validate image size limit (must be less than 5 MB)
     const MAX_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
@@ -360,14 +369,44 @@ export default function App() {
       return;
     }
 
+    const cloudName = cloudinaryCloudName.trim();
+    const uploadPreset = cloudinaryUploadPreset.trim();
+
+    // If Cloudinary credentials are provided, perform direct Cloud upload
+    if (cloudName && uploadPreset) {
+      const toastId = toast.loading("Uploading image to Cloudinary CDN...");
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', uploadPreset);
+
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error?.message || "Cloudinary Upload Rejected");
+        }
+
+        const data = await res.json();
+        toast.success("Uploaded to Cloudinary successfully!", { id: toastId });
+        callback(data.secure_url);
+        return;
+      } catch (err: any) {
+        console.error("Cloudinary upload failed, falling back to local compression:", err);
+        toast.error(`Cloudinary Upload Failed: ${err.message || "Checking settings."}`, { id: toastId });
+        toast.info("Falling back to local high-compression base64 storage...");
+      }
+    }
+
+    // Fallback: Local Canvas Aggressive Compression (to ~10-15 KB each)
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        // Compress images aggressively on client-side (to ~10-15 KB each)
-        // This ensures uploading all 10 gallery images in a single payload
-        // remains well below any strict server-side body limit (e.g. 100kb/1MB).
         const MAX_WIDTH = 600;
         const MAX_HEIGHT = 450;
         let width = img.width;
@@ -1078,7 +1117,15 @@ export default function App() {
           <div className="space-y-6 animate-in fade-in duration-300">
             {/* Toolbar header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <p className="text-gray-400 text-sm font-semibold">{cars.length} cars in catalog.</p>
+              <div className="flex items-center gap-4">
+                <p className="text-gray-400 text-sm font-semibold">{cars.length} cars in catalog.</p>
+                <button
+                  onClick={() => setIsCloudinarySettingsOpen(!isCloudinarySettingsOpen)}
+                  className="px-3 py-1.5 border border-red-200 hover:border-red-600 rounded-xl text-[10px] font-bold text-red-600 hover:bg-red-50/50 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  ☁️ Cloudinary Storage Config
+                </button>
+              </div>
               <button
                 onClick={() => {
                   setEditingCar(null);
@@ -1091,6 +1138,57 @@ export default function App() {
                 <span>Add Fleet Car</span>
               </button>
             </div>
+
+            {/* Cloudinary Integration settings card */}
+            {isCloudinarySettingsOpen && (
+              <div className="bg-white border border-gray-200 p-6 rounded-3xl space-y-4 shadow-sm animate-in slide-in-from-top duration-300">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                    ☁️ Cloudinary Cloud Storage Configuration
+                  </h4>
+                  <button
+                    onClick={() => setIsCloudinarySettingsOpen(false)}
+                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Configure your Cloudinary credentials here to upload and host images instantly on Cloudinary's secure CDN instead of local database Base64 storage! Unsigned uploads must be enabled in your Cloudinary Dashboard.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Cloud Name</label>
+                    <input
+                      type="text"
+                      value={cloudinaryCloudName}
+                      onChange={e => {
+                        setCloudinaryCloudName(e.target.value);
+                        localStorage.setItem('mch_cloudinary_cloud_name', e.target.value);
+                      }}
+                      placeholder="e.g. dphwz3hqp"
+                      className="w-full h-11 px-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-xs transition-all text-gray-900"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Upload Preset (Unsigned)</label>
+                    <input
+                      type="text"
+                      value={cloudinaryUploadPreset}
+                      onChange={e => {
+                        setCloudinaryUploadPreset(e.target.value);
+                        localStorage.setItem('mch_cloudinary_upload_preset', e.target.value);
+                      }}
+                      placeholder="e.g. mycarhub_preset"
+                      className="w-full h-11 px-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-xs transition-all text-gray-900"
+                    />
+                  </div>
+                </div>
+                <div className="text-[10px] text-gray-400">
+                  * Note: If Cloudinary fails or is left blank, the system automatically falls back to our local high-compression Base64 storage.
+                </div>
+              </div>
+            )}
 
             {/* List Cars Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
