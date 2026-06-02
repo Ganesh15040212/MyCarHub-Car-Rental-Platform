@@ -365,8 +365,11 @@ export default function App() {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 600;
+        // Compress images aggressively on client-side (to ~10-15 KB each)
+        // This ensures uploading all 10 gallery images in a single payload
+        // remains well below any strict server-side body limit (e.g. 100kb/1MB).
+        const MAX_WIDTH = 600;
+        const MAX_HEIGHT = 450;
         let width = img.width;
         let height = img.height;
 
@@ -387,7 +390,7 @@ export default function App() {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5); // 50% quality for highly compact size
           callback(compressedBase64);
         }
       };
