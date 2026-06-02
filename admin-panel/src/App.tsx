@@ -399,13 +399,11 @@ export default function App() {
   const handleEditCarClick = (car: ICar) => {
     setEditingCar(car);
     
-    // Set initial image input modes dynamically based on existing value types
+    // Set initial image input modes to default 'upload' as requested
     const initialModes: Record<string, 'url' | 'upload'> = {};
-    initialModes['main'] = (car.image && car.image.startsWith('data:image/')) ? 'upload' : 'url';
-    if (car.images) {
-      car.images.forEach((img, idx) => {
-        initialModes[`gallery-${idx}`] = (img && img.startsWith('data:image/')) ? 'upload' : 'url';
-      });
+    initialModes['main'] = 'upload';
+    for (let idx = 0; idx < 10; idx++) {
+      initialModes[`gallery-${idx}`] = 'upload';
     }
     setImageModes(initialModes);
 
@@ -1290,8 +1288,16 @@ export default function App() {
                               />
                             </label>
                             {carFormData.image && (
-                              <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50">
+                              <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
                                 <img src={carFormData.image} alt="Preview" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => setCarFormData(prev => ({ ...prev, image: '' }))}
+                                  className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
+                                  title="Delete Main Image"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
                               </div>
                             )}
                           </div>
