@@ -402,7 +402,7 @@ export default function App() {
 
     // If Cloudinary credentials are provided, perform direct Cloud upload
     if (cloudName && uploadPreset) {
-      const toastId = toast.loading("Uploading image to Cloudinary CDN...");
+      const toastId = toast.loading("Uploading image...");
       try {
         const formData = new FormData();
         formData.append('file', file);
@@ -415,17 +415,17 @@ export default function App() {
 
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.error?.message || "Cloudinary Upload Rejected");
+          throw new Error(errorData.error?.message || "Upload Rejected");
         }
 
         const data = await res.json();
-        toast.success("Uploaded to Cloudinary successfully!", { id: toastId });
+        toast.success("Image Uploaded successfully!", { id: toastId });
         callback(data.secure_url);
         return;
       } catch (err: any) {
-        console.error("Cloudinary upload failed, falling back to local compression:", err);
-        toast.error(`Cloudinary Upload Failed: ${err.message || "Checking settings."}`, { id: toastId });
-        toast.info("Falling back to local high-compression base64 storage...");
+        console.error("Direct upload failed, falling back to local compression:", err);
+        toast.error(`Upload Failed: ${err.message || "Please check file."}`, { id: toastId });
+        toast.info("Falling back to local high-compression storage...");
       }
     }
 
