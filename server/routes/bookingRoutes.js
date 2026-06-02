@@ -60,26 +60,25 @@ const updateCarAvailability = async (carId) => {
 // Helper to configure email transporter
 const sendBookingEmail = async (bookingData) => {
   const OWNER_EMAIL = process.env.OWNER_EMAIL?.trim() || '';
+  const ownerEmail = OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com';
 
+  // 1. Send Email to the Customer/User
   try {
-    const ownerEmail = OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com';
-    const toEmails = [bookingData.email, ownerEmail];
-
     await sendMailHelper({
-      to: toEmails,
-      replyTo: bookingData.email,
-      subject: `⏳ Booking Request Received & Pending - ID: ${bookingData.bookingId}`,
+      to: bookingData.email,
+      replyTo: ownerEmail,
+      subject: `Your Booking successfully send the owner - ID: ${bookingData.bookingId}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
           <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
             <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub</h1>
-            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">BOOKING REQUEST RECEIVED & PENDING REVIEW</p>
+            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">Your Booking successfully send the owner</p>
           </div>
           
           <div style="margin-bottom: 25px; text-align: center;">
             <h2 style="color: #030213; margin: 0 0 10px 0;">Dear ${bookingData.customerName},</h2>
             <p style="color: #444; font-size: 15px; line-height: 1.6; margin: 0;">
-              Thank you for reserving a car with My Car Hub! Your booking request with ID <strong>${bookingData.bookingId}</strong> has been successfully received and is currently <strong>Pending Review</strong>.
+              Your Booking successfully send the owner! Thank you for reserving a car with My Car Hub. Your booking request with ID <strong>${bookingData.bookingId}</strong> has been successfully received and is currently pending review.
             </p>
             <p style="color: #666; font-size: 13px; line-height: 1.6; margin-top: 10px;">
               Our administrator team is verifying the availability of the vehicle. You will receive an official booking confirmation email with a PDF summary receipt as soon as your booking is approved!
@@ -126,8 +125,85 @@ const sendBookingEmail = async (bookingData) => {
         </div>
       `
     });
+    console.log(`[Mail Helper] Customer booking alert ('Your Booking successfully send the owner') sent successfully to: ${bookingData.email}`);
   } catch (error) {
-    console.error('Error sending booking request email:', error);
+    console.error('[Mail Helper] Error sending customer booking alert:', error);
+  }
+
+  // 2. Send Email to the Owner
+  try {
+    await sendMailHelper({
+      to: ownerEmail,
+      replyTo: bookingData.email,
+      subject: `New Booking Requested Recived - ID: ${bookingData.bookingId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
+          <div style="text-align: center; border-bottom: 2px solid #d4183d; padding-bottom: 15px; margin-bottom: 20px;">
+            <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub Admin</h1>
+            <p style="color: #d4183d; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">New Booking Requested Recived</p>
+          </div>
+          
+          <div style="margin-bottom: 25px; text-align: center;">
+            <h2 style="color: #030213; margin: 0 0 10px 0;">Hello Owner,</h2>
+            <p style="color: #444; font-size: 15px; line-height: 1.6; margin: 0;">
+              <strong>New Booking Requested Recived!</strong> A customer has submitted a new reservation request on My Car Hub. The details are provided below.
+            </p>
+            <p style="color: #666; font-size: 13px; line-height: 1.6; margin-top: 10px;">
+              Please log in to the admin panel to review and approve or reject this booking request.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
+            <h3 style="color: #030213; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 6px; font-size: 14px;">CUSTOMER & RENTAL DETAILS</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: #666; width: 40%;"><strong>Customer Name:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.customerName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Customer Phone:</strong></td>
+                <td style="padding: 4px 0; color: #111;">${bookingData.phone}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Customer Email:</strong></td>
+                <td style="padding: 4px 0; color: #111;">${bookingData.email}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Vehicle Requested:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.carName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Booking ID:</strong></td>
+                <td style="padding: 4px 0; color: #111;"><code>${bookingData.bookingId}</code></td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Pickup Schedule:</strong></td>
+                <td style="padding: 4px 0; color: #111;">${bookingData.pickupDate} at ${bookingData.pickupTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Drop Schedule:</strong></td>
+                <td style="padding: 4px 0; color: #111;">${bookingData.dropDate} at ${bookingData.dropTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Rental Duration:</strong></td>
+                <td style="padding: 4px 0; color: #111; font-weight: bold;">${bookingData.durationDays} Day(s)</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;"><strong>Estimated Price:</strong></td>
+                <td style="padding: 4px 0; color: #d4183d; font-weight: bold; font-size: 14px;">₹${bookingData.totalAmount}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; color: #888; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
+            This email was automatically generated by the My Car Hub Platform booking scheduler.
+          </div>
+        </div>
+      `
+    });
+    console.log(`[Mail Helper] Owner booking alert ('New Booking Requested Recived') sent successfully to: ${ownerEmail}`);
+  } catch (error) {
+    console.error('[Mail Helper] Error sending owner booking alert:', error);
   }
 };
 
