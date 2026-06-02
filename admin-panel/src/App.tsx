@@ -1269,37 +1269,42 @@ export default function App() {
                         </div>
 
                         {(imageModes['main'] || 'upload') === 'upload' ? (
-                          <div className="flex gap-4 items-center">
-                            <label className="flex-1 flex flex-col items-center justify-center h-12 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-500 hover:bg-red-50/20 cursor-pointer transition-all">
-                              <span className="text-xs font-semibold text-gray-600 truncate px-4">
-                                {carFormData.image ? (carFormData.image.startsWith('data:image/') ? "✓ Main Image Selected (Base64)" : "✓ URL Selected") : "Choose Main Image File..."}
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={e => {
-                                  if (e.target.files && e.target.files[0]) {
-                                    handleImageUpload(e.target.files[0], (base64) => {
-                                      setCarFormData(prev => ({ ...prev, image: base64 }));
-                                    });
-                                  }
-                                }}
-                              />
-                            </label>
-                            {carFormData.image && (
-                              <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
-                                <img src={carFormData.image} alt="Preview" className="w-full h-full object-cover" />
-                                <button
-                                  type="button"
-                                  onClick={() => setCarFormData(prev => ({ ...prev, image: '' }))}
-                                  className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
-                                  title="Delete Main Image"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )}
+                          <div className="space-y-1">
+                            <div className="flex gap-4 items-center">
+                              <label className="flex-1 flex flex-col items-center justify-center h-12 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-500 hover:bg-red-50/20 cursor-pointer transition-all">
+                                <span className="text-xs font-semibold text-gray-600 truncate px-4">
+                                  {carFormData.image ? (carFormData.image.startsWith('data:image/') ? "✓ Main Image Selected (Base64)" : "✓ URL Selected") : "Choose Main Image File..."}
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={e => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      handleImageUpload(e.target.files[0], (base64) => {
+                                        setCarFormData(prev => ({ ...prev, image: base64 }));
+                                      });
+                                    }
+                                  }}
+                                />
+                              </label>
+                              {carFormData.image && (
+                                <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
+                                  <img src={carFormData.image} alt="Preview" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => setCarFormData(prev => ({ ...prev, image: '' }))}
+                                    className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
+                                    title="Delete Main Image"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-red-500 font-semibold pl-1">
+                              * Ex: Image file size must be less than 5 MB
+                            </p>
                           </div>
                         ) : (
                           <input
@@ -1354,42 +1359,47 @@ export default function App() {
                                 </div>
 
                                 {mode === 'upload' ? (
-                                  <div className="flex gap-3 items-center">
-                                    <label className="flex-1 flex flex-col items-center justify-center h-10 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-500 hover:bg-red-50/20 cursor-pointer transition-all">
-                                      <span className="text-[11px] font-semibold text-gray-600 truncate px-3">
-                                        {imageUrl ? (isUploaded ? "✓ Image Uploaded" : "✓ URL Selected") : "Choose Photo File..."}
-                                      </span>
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={e => {
-                                          if (e.target.files && e.target.files[0]) {
-                                            handleImageUpload(e.target.files[0], (base64) => {
-                                              const newImages = [...carFormData.images];
-                                              newImages[idx] = base64;
-                                              setCarFormData(prev => ({ ...prev, images: newImages }));
-                                            });
-                                          }
-                                        }}
-                                      />
-                                    </label>
-                                    {imageUrl && (
-                                      <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
-                                        <img src={imageUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const newImages = [...carFormData.images];
-                                            newImages[idx] = '';
-                                            setCarFormData(prev => ({ ...prev, images: newImages }));
+                                  <div className="space-y-1 w-full">
+                                    <div className="flex gap-3 items-center">
+                                      <label className="flex-1 flex flex-col items-center justify-center h-10 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-500 hover:bg-red-50/20 cursor-pointer transition-all">
+                                        <span className="text-[11px] font-semibold text-gray-600 truncate px-3">
+                                          {imageUrl ? (isUploaded ? "✓ Image Uploaded" : "✓ URL Selected") : "Choose Photo File..."}
+                                        </span>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={e => {
+                                            if (e.target.files && e.target.files[0]) {
+                                              handleImageUpload(e.target.files[0], (base64) => {
+                                                const newImages = [...carFormData.images];
+                                                newImages[idx] = base64;
+                                                setCarFormData(prev => ({ ...prev, images: newImages }));
+                                              });
+                                            }
                                           }}
-                                          className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
-                                        >
-                                          <X className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    )}
+                                        />
+                                      </label>
+                                      {imageUrl && (
+                                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 bg-gray-50 relative group/thumb">
+                                          <img src={imageUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const newImages = [...carFormData.images];
+                                              newImages[idx] = '';
+                                              setCarFormData(prev => ({ ...prev, images: newImages }));
+                                            }}
+                                            className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-xl cursor-pointer"
+                                          >
+                                            <X className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] text-red-500 font-semibold pl-1">
+                                      * Ex: Image file size must be less than 5 MB
+                                    </p>
                                   </div>
                                 ) : (
                                   <div className="flex gap-3 items-center">
