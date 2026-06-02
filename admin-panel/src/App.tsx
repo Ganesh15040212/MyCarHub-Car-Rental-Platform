@@ -316,23 +316,52 @@ export default function App() {
   const handleCarSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Client-side Duplicate Car Number Check
+    const trimmedId = carFormData.id.trim().toUpperCase();
+    if (!trimmedId) {
+      toast.error("Registration / Car Number is required!");
+      return;
+    }
+
+    if (editingCar) {
+      // If we changed the ID, make sure it doesn't conflict with another car's ID
+      if (trimmedId !== editingCar.id && cars.some(c => c.id.toUpperCase() === trimmedId)) {
+        toast.error(`Car with registration number ${trimmedId} already exists!`);
+        return;
+      }
+    } else {
+      // For new car, make sure it doesn't exist
+      if (cars.some(c => c.id.toUpperCase() === trimmedId)) {
+        toast.error(`Car with registration number ${trimmedId} already exists!`);
+        return;
+      }
+    }
+
+    const payload = { ...carFormData, id: trimmedId };
+
     if (editingCar) {
       // UPDATE Car
       try {
         const res = await fetch(`${API_URL}/cars/${editingCar.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(carFormData)
+          body: JSON.stringify(payload)
         });
         if (res.ok) {
           toast.success('Car Updated Successfully');
           fetchEntities();
         } else {
-          throw new Error();
+          const data = await res.json();
+          throw new Error(data.message || 'Car registration number already exists');
         }
-      } catch (err) {
-        // Offline update
-        setCars(prev => prev.map(c => c.id === editingCar.id ? { ...c, ...carFormData } : c));
+      } catch (err: any) {
+        // Show validation errors instead of offline notice unless it's a network error
+        if (err.message && err.message !== 'Failed to fetch' && !err.message.includes('network') && err.message !== 'Failed to execute') {
+          toast.error(err.message || 'Update failed');
+          return; // Keep form open so they can correct it!
+        }
+        // Offline update fallback
+        setCars(prev => prev.map(c => c.id === editingCar.id ? { ...c, ...payload } : c));
         toast.success('Car Updated (Local Offline Mode)');
       }
     } else {
@@ -341,17 +370,23 @@ export default function App() {
         const res = await fetch(`${API_URL}/cars`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(carFormData)
+          body: JSON.stringify(payload)
         });
         if (res.ok) {
           toast.success('Car Created Successfully');
           fetchEntities();
         } else {
-          throw new Error('API server returned error');
+          const data = await res.json();
+          throw new Error(data.message || 'Car registration number already exists');
         }
-      } catch (err) {
-        // Offline add
-        setCars(prev => [...prev, { ...carFormData }]);
+      } catch (err: any) {
+        // Show validation errors instead of offline notice unless it's a network error
+        if (err.message && err.message !== 'Failed to fetch' && !err.message.includes('network') && err.message !== 'Failed to execute') {
+          toast.error(err.message || 'Creation failed');
+          return; // Keep form open so they can correct it!
+        }
+        // Offline add fallback
+        setCars(prev => [...prev, payload]);
         toast.success('Car Created (Local Offline Mode)');
       }
     }
