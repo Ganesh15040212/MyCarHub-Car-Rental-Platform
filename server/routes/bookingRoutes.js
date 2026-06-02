@@ -587,11 +587,30 @@ const sendCorrectionEmail = async (bookingData, oldStatus, newStatus) => {
   }
 };
 
-// GET all bookings
+// GET all bookings or paginated bookings
 router.get('/', async (req, res) => {
   try {
-    const bookings = await Booking.find({}).sort({ createdAt: -1 });
-    res.json(bookings);
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit);
+
+    if (page && limit) {
+      const skip = (page - 1) * limit;
+      const totalBookings = await Booking.countDocuments({});
+      const bookings = await Booking.find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      res.json({
+        bookings,
+        currentPage: page,
+        totalPages: Math.ceil(totalBookings / limit),
+        totalBookings
+      });
+    } else {
+      const bookings = await Booking.find({}).sort({ createdAt: -1 });
+      res.json(bookings);
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

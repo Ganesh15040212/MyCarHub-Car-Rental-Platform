@@ -11,6 +11,7 @@ import {
   X, 
   Lock, 
   ChevronRight, 
+  ChevronLeft, 
   LogOut, 
   Database, 
   AlertTriangle,
@@ -90,6 +91,11 @@ export default function App() {
   const [cars, setCars] = useState<ICar[]>([]);
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [feedbacks, setFeedbacks] = useState<IFeedback[]>([]);
+  const [bookingPage, setBookingPage] = useState<number>(1);
+  const [paginatedBookings, setPaginatedBookings] = useState<IBooking[]>([]);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalBookingsCount, setTotalBookingsCount] = useState<number>(0);
+  const [bookingLimit] = useState<number>(10);
   const [isLoading, setIsLoading] = useState(false);
 
   // Manage Cars Form State
@@ -285,6 +291,10 @@ export default function App() {
       if (feedbacksRes.ok) setFeedbacks(await feedbacksRes.json());
       
       setIsBackendConnected(true);
+
+      if (activeTab === 'bookings') {
+        fetchPaginatedBookings(bookingPage, true);
+      }
     } catch (err) {
       console.warn('Backend offline. Loaded standalone fallback dataset.');
       setIsBackendConnected(false);
@@ -296,18 +306,76 @@ export default function App() {
       if (cachedCars) setCars(JSON.parse(cachedCars));
       if (cachedBookings) setBookings(JSON.parse(cachedBookings));
       if (cachedFeedbacks) setFeedbacks(JSON.parse(cachedFeedbacks));
+
+      // In offline mode, populate paginated bookings from cached bookings list
+      if (cachedBookings) {
+        const allBookings = JSON.parse(cachedBookings) as IBooking[];
+        const startIndex = (bookingPage - 1) * bookingLimit;
+        const endIndex = startIndex + bookingLimit;
+        setPaginatedBookings(allBookings.slice(startIndex, endIndex));
+        setTotalPages(Math.ceil(allBookings.length / bookingLimit) || 1);
+        setTotalBookingsCount(allBookings.length);
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  const fetchPaginatedBookings = async (page: number, silent = false) => {
+    if (!silent) setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/bookings?page=${page}&limit=${bookingLimit}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPaginatedBookings(data.bookings);
+        setTotalPages(data.totalPages);
+        setTotalBookingsCount(data.totalBookings);
+        setIsBackendConnected(true);
+      } else {
+        throw new Error();
+      }
+    } catch (err) {
+      console.warn("Backend offline. Loaded standalone fallback dataset for paginated bookings.");
+      setIsBackendConnected(false);
+      // Retrieve fallback items from localStorage/bookings state
+      const cachedBookingsStr = localStorage.getItem('mch_bookings');
+      if (cachedBookingsStr) {
+        const allBookings = JSON.parse(cachedBookingsStr) as IBooking[];
+        const startIndex = (page - 1) * bookingLimit;
+        const endIndex = startIndex + bookingLimit;
+        setPaginatedBookings(allBookings.slice(startIndex, endIndex));
+        setTotalPages(Math.ceil(allBookings.length / bookingLimit) || 1);
+        setTotalBookingsCount(allBookings.length);
+      }
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  };
+
+  // Trigger paginated bookings fetch
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'bookings') {
+      fetchPaginatedBookings(bookingPage);
+    }
+  }, [isAuthenticated, activeTab, bookingPage]);
 
   // Keep localStorage updated for standalone fallbacks
   useEffect(() => {
     if (cars.length > 0) localStorage.setItem('mch_cars', JSON.stringify(cars));
   }, [cars]);
   useEffect(() => {
-    if (bookings.length > 0) localStorage.setItem('mch_bookings', JSON.stringify(bookings));
-  }, [bookings]);
+    if (bookings.length > 0) {
+      localStorage.setItem('mch_bookings', JSON.stringify(bookings));
+      // Slicing local offline bookings to update visual paginated view
+      if (!isBackendConnected) {
+        const startIndex = (bookingPage - 1) * bookingLimit;
+        const endIndex = startIndex + bookingLimit;
+        setPaginatedBookings(bookings.slice(startIndex, endIndex));
+        setTotalPages(Math.ceil(bookings.length / bookingLimit) || 1);
+        setTotalBookingsCount(bookings.length);
+      }
+    }
+  }, [bookings, bookingPage, bookingLimit, isBackendConnected]);
   useEffect(() => {
     if (feedbacks.length > 0) localStorage.setItem('mch_feedbacks', JSON.stringify(feedbacks));
   }, [feedbacks]);
@@ -568,6 +636,7 @@ export default function App() {
       if (res.ok) {
         toast.success(`Booking status changed to ${nextStatus}`);
         fetchEntities();
+        fetchPaginatedBookings(bookingPage);
       } else {
         throw new Error();
       }
@@ -1562,10 +1631,10 @@ export default function App() {
         {activeTab === 'bookings' && (
           <div className="bg-white border border-gray-200/80 shadow-md rounded-3xl p-6 animate-in fade-in duration-300 text-gray-900">
             <div className="flex justify-between items-center mb-6">
-              <p className="text-gray-500 text-sm font-semibold">{bookings.length} reservations on record.</p>
+              <p className="text-gray-500 text-sm font-semibold">{totalBookingsCount} reservations on record.</p>
             </div>
 
-            {bookings.length > 0 ? (
+            {paginatedBookings.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1000px] text-left text-sm text-gray-800">
                   <thead>
@@ -1581,7 +1650,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {bookings.map((booking) => (
+                    {paginatedBookings.map((booking) => (
                       <tr key={booking.bookingId} className="hover:bg-gray-50/50 transition-all">
                         <td className="py-4 font-mono font-bold text-gray-500">{booking.bookingId}</td>
                         <td className="py-4">
@@ -1710,6 +1779,61 @@ export default function App() {
               </div>
             ) : (
               <p className="text-center text-gray-500 py-8">No bookings received in database.</p>
+            )}
+
+            {/* Premium Pagination Control UI */}
+            {totalBookingsCount > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-150/80 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 font-medium">
+                <div>
+                  Showing <span className="font-bold text-gray-900">{Math.min((bookingPage - 1) * bookingLimit + 1, totalBookingsCount)}</span> to{' '}
+                  <span className="font-bold text-gray-900">{Math.min(bookingPage * bookingLimit, totalBookingsCount)}</span> of{' '}
+                  <span className="font-bold text-gray-900">{totalBookingsCount}</span> reservations
+                </div>
+
+                <div className="flex items-center gap-1">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => setBookingPage(prev => Math.max(prev - 1, 1))}
+                    disabled={bookingPage === 1}
+                    className="h-10 px-3.5 rounded-xl border border-gray-250/70 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white text-gray-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed shadow-xs"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Previous</span>
+                  </button>
+
+                  {/* Page Numbers */}
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - bookingPage) <= 1)
+                    .map((p, idx, arr) => {
+                      const showEllipsis = idx > 0 && p - arr[idx - 1] > 1;
+                      return (
+                        <React.Fragment key={p}>
+                          {showEllipsis && <span className="px-2 text-gray-400 select-none">...</span>}
+                          <button
+                            onClick={() => setBookingPage(p)}
+                            className={`h-10 w-10 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                              bookingPage === p
+                                ? 'bg-red-600 text-white shadow-md shadow-red-200'
+                                : 'bg-white border border-gray-250/70 hover:bg-slate-50 text-gray-700'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => setBookingPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={bookingPage === totalPages}
+                    className="h-10 px-3.5 rounded-xl border border-gray-250/70 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white text-gray-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed shadow-xs"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
