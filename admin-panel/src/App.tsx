@@ -259,7 +259,7 @@ export default function App() {
   const handleLogOut = () => {
     localStorage.removeItem('mch_admin_token');
     setIsAuthenticated(false);
-    toast.info('Logged Out Successfully');
+    toast.info('Console Locked Successfully');
   };
 
   const fetchEntities = async () => {
@@ -1302,9 +1302,11 @@ export default function App() {
                                 </div>
                               )}
                             </div>
-                            <p className="text-[10px] text-red-500 font-semibold pl-1">
-                              * Ex: Image file size must be less than 5 MB
-                            </p>
+                            {!carFormData.image && (
+                              <p className="text-[10px] text-red-500 font-semibold pl-1">
+                                * Ex: Image file size must be less than 5 MB
+                              </p>
+                            )}
                           </div>
                         ) : (
                           <div className="space-y-1">
@@ -1316,9 +1318,11 @@ export default function App() {
                               className="w-full h-12 px-4 bg-white border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-xl outline-none text-sm transition-all text-gray-900"
                               required
                             />
-                            <p className="text-[10px] text-red-500 font-semibold pl-1">
-                              * Only Image Type URL is Accepted
-                            </p>
+                            {!carFormData.image && (
+                              <p className="text-[10px] text-red-500 font-semibold pl-1">
+                                * Only Image Type URL is Accepted
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1402,9 +1406,11 @@ export default function App() {
                                         </div>
                                       )}
                                     </div>
-                                    <p className="text-[10px] text-red-500 font-semibold pl-1">
-                                      * Ex: Image file size must be less than 5 MB
-                                    </p>
+                                    {!imageUrl && (
+                                      <p className="text-[10px] text-red-500 font-semibold pl-1">
+                                        * Ex: Image file size must be less than 5 MB
+                                      </p>
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="space-y-1 w-full">
@@ -1444,9 +1450,11 @@ export default function App() {
                                         </div>
                                       )}
                                     </div>
-                                    <p className="text-[10px] text-red-500 font-semibold pl-1">
-                                      * Only Image Type URL is Accepted
-                                    </p>
+                                    {!imageUrl && (
+                                      <p className="text-[10px] text-red-500 font-semibold pl-1">
+                                        * Only Image Type URL is Accepted
+                                      </p>
+                                    )}
                                   </div>
                                 )}
                               </div>
