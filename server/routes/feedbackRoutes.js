@@ -10,7 +10,7 @@ const sendFeedbackEmail = async (feedbackData) => {
 
   try {
     await sendMailHelper({
-      to: OWNER_EMAIL || 'ganeshmanivnr2004@gmail.com',
+      to: OWNER_EMAIL || 'mycarhubbbb@gmail.com',
       replyTo: feedbackData.email,
       subject: `✉️ New Contact Message from ${feedbackData.name}`,
       html: `
