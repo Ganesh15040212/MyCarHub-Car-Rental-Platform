@@ -291,7 +291,7 @@ export default function Contact() {
             <CardContent className="p-0">
               <div className="w-full h-[450px] bg-gray-50 overflow-hidden relative">
                 <iframe
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(COMPANY_INFO.address)}&t=&z=10&ie=UTF8&iwloc=&output=embed`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(COMPANY_INFO.address)}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

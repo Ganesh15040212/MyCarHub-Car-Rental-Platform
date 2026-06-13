@@ -32,7 +32,7 @@ export const COMPANY_INFO = {
   phone: "9597693716",
   owner: "M Kanthaswamy",
   email: "mycarhubbbb@gmail.com",
-  address: "Tamil Nadu, India"
+  address: "304/2A, Kamaraj Nagar, Kurinji Garden, Selvapuram South, Selvapuram, Coimbatore, Tamil Nadu 641026"
 };
 
 export const PRICING_TERMS = {
