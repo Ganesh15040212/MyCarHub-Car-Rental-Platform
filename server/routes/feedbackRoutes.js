@@ -16,7 +16,7 @@ const sendFeedbackEmail = async (feedbackData) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e1e1e1; border-radius: 12px; padding: 24px; background-color: #fcfcfc;">
           <div style="text-align: center; border-bottom: 2px solid #0056b3; padding-bottom: 15px; margin-bottom: 20px;">
-            <h1 style="color: #030213; margin: 0; font-size: 28px;">My Car Hub</h1>
+            <h1 style="color: #030213; margin: 0; font-size: 28px;">Mukesh</h1>
             <p style="color: #0056b3; margin: 5px 0 0 0; font-weight: bold; font-size: 14px;">NEW CONTACT FORM SUBMISSION</p>
           </div>
           
@@ -47,7 +47,7 @@ const sendFeedbackEmail = async (feedbackData) => {
           </div>
 
           <div style="text-align: center; color: #888; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
-            This email was sent from the My Car Hub Platform Contact page form.
+            This email was sent from the Mukesh Platform Contact page form.
           </div>
         </div>
       `

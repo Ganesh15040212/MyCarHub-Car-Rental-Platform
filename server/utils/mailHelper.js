@@ -35,7 +35,7 @@ export const sendMailHelper = async ({ to, replyTo, subject, html, attachments =
   if (SENDGRID_API_KEY) {
     console.log(`[Mail Helper] SENDGRID_API_KEY found. Preparing to send email via SendGrid HTTPS API to: ${recipients.join(', ')}`);
     try {
-      const fromName = process.env.SENDGRID_FROM_NAME?.trim() || 'My Car Hub Bookings';
+      const fromName = process.env.SENDGRID_FROM_NAME?.trim() || 'Mukesh Bookings';
 
       // Map attachments for SendGrid structure (Content must be base64-encoded string)
       const sendGridAttachments = attachments.map((att) => {
@@ -147,7 +147,7 @@ export const sendMailHelper = async ({ to, replyTo, subject, html, attachments =
     });
 
     const mailOptions = {
-      from: `"My Car Hub Bookings" <${EMAIL_USER}>`,
+      from: `"Mukesh Bookings" <${EMAIL_USER}>`,
       to: recipients.join(', '),
       replyTo,
       subject,
