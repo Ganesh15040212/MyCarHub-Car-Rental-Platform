@@ -219,7 +219,7 @@ const generateReceiptPDF = (bookingData, car = null) => {
       doc.on('error', (err) => reject(err));
 
       // --- Brand Header ---
-      doc.fillColor('#d4183d').fontSize(26).font('Helvetica-Bold').text('Mukesh', 50, 50);
+      doc.fillColor('#d4183d').fontSize(26).font('Helvetica-Bold').text('My Car Hub', 50, 50);
       doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold').text('PREMIUM RENTAL SERVICES', 50, 80);
       
       // Receipt Details (Top Right)
@@ -307,7 +307,7 @@ const generateReceiptPDF = (bookingData, car = null) => {
       doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, footerY).lineTo(545, footerY).stroke();
       
       doc.fillColor('#999999').fontSize(9).font('Helvetica');
-      doc.text('Thank you for choosing Mukesh!', 50, footerY + 15, { align: 'center', width: 495 });
+      doc.text('Thank you for choosing My Car Hub!', 50, footerY + 15, { align: 'center', width: 495 });
       doc.text(`For queries, contact support at ${process.env.OWNER_EMAIL || 'mycarhubbbb@gmail.com'} or call +91 6369704082`, 50, footerY + 30, { align: 'center', width: 495 });
       doc.text('This is a computer-generated confirmation receipt and does not require a physical signature.', 50, footerY + 45, { align: 'center', width: 495 });
       

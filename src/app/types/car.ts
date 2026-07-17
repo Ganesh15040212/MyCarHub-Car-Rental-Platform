@@ -28,9 +28,9 @@ export interface BookingForm {
 }
 
 export const COMPANY_INFO = {
-  name: "Mukesh",
+  name: "My Car Hub",
   phone: "6369704082",
-  owner: "M Kanthaswamy",
+  owner: "Mukesh",
   email: "mycarhubbbb@gmail.com",
   address: "304/2A, Kamaraj Nagar, Kurinji Garden, Selvapuram South, Selvapuram, Coimbatore, Tamil Nadu 641026"
 };

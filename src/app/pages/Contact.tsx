@@ -105,7 +105,7 @@ export default function Contact() {
                 <Phone className="w-8 h-8 text-red-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Phone</h3>
-              <a href={`tel:${COMPANY_INFO.phone}`} className="text-red-600 hover:underline text-lg">
+              <a href={`https://wa.me/91${COMPANY_INFO.phone}`} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline text-lg">
                 {COMPANY_INFO.phone}
               </a>
               <p className="text-gray-600 mt-2 text-sm">Available 24/7</p>
@@ -234,7 +234,11 @@ export default function Contact() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Contact</p>
-                  <p className="font-semibold">{COMPANY_INFO.phone}</p>
+                  <p className="font-semibold">
+                    <a href={`https://wa.me/91${COMPANY_INFO.phone}`} target="_blank" rel="noopener noreferrer" className="hover:text-red-600 transition-colors">
+                      {COMPANY_INFO.phone}
+                    </a>
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Email</p>

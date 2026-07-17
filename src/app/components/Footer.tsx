@@ -53,7 +53,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Phone className="w-5 h-5 text-red-600 mt-0.5" />
-                <a href={`tel:${COMPANY_INFO.phone}`} className="text-gray-400 hover:text-red-600 transition">
+                <a href={`https://wa.me/91${COMPANY_INFO.phone}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-600 transition">
                   {COMPANY_INFO.phone}
                 </a>
               </li>

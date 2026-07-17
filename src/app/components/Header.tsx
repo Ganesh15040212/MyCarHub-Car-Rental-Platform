@@ -24,7 +24,7 @@ export default function Header() {
         {/* Top Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-center py-2 border-b border-gray-100 gap-2">
           <div className="flex items-center gap-4 text-xs sm:text-sm text-gray-500">
-            <a href={`tel:${COMPANY_INFO.phone}`} className="flex items-center gap-1.5 hover:text-red-600 transition-colors">
+            <a href={`https://wa.me/91${COMPANY_INFO.phone}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-red-600 transition-colors">
               <Phone className="w-3.5 h-3.5" />
               {COMPANY_INFO.phone}
             </a>
